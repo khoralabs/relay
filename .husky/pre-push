@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+set -e
+
+cd "$(git rev-parse --show-toplevel)"
+
+echo "pre-push: check, typecheck, test…"
+bun run check
+bun run typecheck
+bun run test
