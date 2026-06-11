@@ -1,3 +1,5 @@
+import { base64UrlToBytes, bytesToBase64Url } from "@khoralabs/relay-crypto";
+
 /** Header names for per-request agent signatures (used on every authenticated route). */
 export const AGENT_REQUEST_HEADER = {
   did: "X-Agent-Did",
@@ -24,14 +26,6 @@ export type AgentRequestEnvelope = {
   nonce: string;
   signatureB64Url: string;
 };
-
-function bytesToBase64Url(bytes: Uint8Array): string {
-  let s = "";
-  for (let i = 0; i < bytes.length; i++) {
-    s += String.fromCharCode(bytes[i] as number);
-  }
-  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
 
 async function sha256B64Url(text: string): Promise<string> {
   const data = new TextEncoder().encode(text);
@@ -123,18 +117,9 @@ export function parseAgentRequestEnvelopeFromSearch(
   return parseEnvelopeFromGetters((k) => sp.get(k), sp.get(AGENT_REQUEST_SEARCH.did));
 }
 
-function b64UrlToBytes(b64url: string): Uint8Array {
-  const pad = b64url.length % 4 === 0 ? "" : "=".repeat(4 - (b64url.length % 4));
-  const b64 = b64url.replace(/-/g, "+").replace(/_/g, "/") + pad;
-  const bin = atob(b64);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
-}
-
 /** Decode the base64url signature from an envelope to raw bytes. */
 export function envelopeSignatureBytes(env: AgentRequestEnvelope): Uint8Array {
-  return b64UrlToBytes(env.signatureB64Url);
+  return base64UrlToBytes(env.signatureB64Url);
 }
 
 /** Generate a random base64url nonce (16 bytes -> 22 chars). */

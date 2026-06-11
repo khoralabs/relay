@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { getPublicKeyAsync } from "@noble/ed25519";
 
-import { bytesToHex } from "./did";
+import { bytesToHex } from "./encoding";
 import {
   buildX3dhInitiator,
   deriveX3dhResponder,

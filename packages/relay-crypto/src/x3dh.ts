@@ -1,6 +1,6 @@
 import { ed25519, x25519 } from "@noble/curves/ed25519.js";
 
-import { bytesToHex, hexToBytes } from "./did";
+import { bytesToHex, hexToBytes } from "./encoding";
 import type { PreKeyBundle, SignedPreKey, X3dhInitMessage } from "./prekeys";
 
 function ed25519SeedToX25519Priv(seed: Uint8Array): Uint8Array {

@@ -1,9 +1,12 @@
+export { ed25519PublicKeyBytesFromDid } from "./did";
 export {
   base58Decode,
+  base58Encode,
+  base64UrlToBytes,
+  bytesToBase64Url,
   bytesToHex,
-  ed25519PublicKeyBytesFromDid,
   hexToBytes,
-} from "./did";
+} from "./encoding";
 export {
   decryptPairingSecretHex,
   encryptPairingSecretHex,

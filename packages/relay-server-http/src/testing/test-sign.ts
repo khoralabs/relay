@@ -3,43 +3,8 @@ import {
   canonicalAgentRequestMessage,
   canonicalAgentRequestPath,
 } from "@khoralabs/relay-contracts";
+import { base58Encode, bytesToBase64Url } from "@khoralabs/relay-crypto";
 import { signAsync } from "@noble/ed25519";
-
-const BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-
-function bytesToBase64Url(bytes: Uint8Array): string {
-  let s = "";
-  for (let i = 0; i < bytes.length; i++) {
-    s += String.fromCharCode(bytes[i] as number);
-  }
-  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-
-function base58Encode(bytes: Uint8Array): string {
-  const digits = [0];
-  for (const byte of bytes) {
-    let carry = byte;
-    for (let j = 0; j < digits.length; j++) {
-      const n = (digits[j] as number) * 256 + carry;
-      digits[j] = n % 58;
-      carry = Math.floor(n / 58);
-    }
-    while (carry > 0) {
-      digits.push(carry % 58);
-      carry = Math.floor(carry / 58);
-    }
-  }
-  let zeros = 0;
-  for (const byte of bytes) {
-    if (byte === 0) zeros++;
-    else break;
-  }
-  let out = "1".repeat(zeros);
-  for (let i = digits.length - 1; i >= 0; i--) {
-    out += BASE58_ALPHABET[digits[i] as number];
-  }
-  return out;
-}
 
 export function didKeyFromPublicKey(pubKey: Uint8Array): string {
   const prefixed = new Uint8Array(2 + pubKey.length);
