@@ -7,7 +7,12 @@ import {
   verifyChannelTicketClaims,
 } from "./channel-ticket";
 
-export type RelayHubWsData = { channelId: string; ticket: string; peerId: string };
+export type RelayHubWsData = {
+  channelId: string;
+  ticket: string;
+  peerId: string;
+  replayAfterId?: number;
+};
 
 export type RelayPeer = {
   send(bytes: Uint8Array): void;
@@ -30,6 +35,7 @@ export type RelayHub = {
   detachPeer(channelId: string, peer: RelayPeer): void;
   relayBytes(channelId: string, from: RelayPeer, bytes: Uint8Array): void;
   getPeerCount(channelId: string): number;
+  isSpoolEnabled(channelId: string): boolean;
   purgeExpiredChannels(nowMs?: number): number;
 };
 
@@ -166,6 +172,10 @@ export function createRelayHub(opts: {
       return peers.get(channelId)?.size ?? 0;
     },
 
+    isSpoolEnabled(channelId: string): boolean {
+      return spoolEnabled.has(channelId);
+    },
+
     purgeExpiredChannels(nowMs = Date.now()): number {
       return opts.admission.purgeExpiredChannels(nowMs);
     },
@@ -190,7 +200,9 @@ export function relayHubWebSocketHandlers(deps: { hub: RelayHub }): {
         };
         peerByWs.set(ws, peer);
         try {
-          await deps.hub.attachPeer(d.channelId, peer, d.ticket);
+          await deps.hub.attachPeer(d.channelId, peer, d.ticket, {
+            replayAfterId: d.replayAfterId,
+          });
         } catch {
           ws.close(1008, "invalid ticket");
         }

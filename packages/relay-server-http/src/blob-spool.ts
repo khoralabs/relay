@@ -6,6 +6,7 @@ const DEFAULT_MAX_BYTES_PER_CHANNEL = 64 * 1024 * 1024;
 export type BlobSpool = {
   append(channelId: string, blob: Uint8Array, nowMs: number): number;
   getBlobsAfter(channelId: string, afterId: number): Array<{ id: number; blob: Uint8Array }>;
+  getMaxId(channelId: string): number | undefined;
   purgeChannel(channelId: string): void;
 };
 
@@ -54,6 +55,7 @@ export function createBlobSpool(db: Database): BlobSpool {
   const selectAfterStmt = db.query(
     `SELECT id, blob FROM relay_spool WHERE channel_id = ? AND id > ? ORDER BY id ASC`,
   );
+  const maxIdStmt = db.query(`SELECT MAX(id) AS max_id FROM relay_spool WHERE channel_id = ?`);
   const purgeStmt = db.prepare(`DELETE FROM relay_spool WHERE channel_id = ?`);
 
   const trimStmts: TrimStmts = {
@@ -88,6 +90,12 @@ export function createBlobSpool(db: Database): BlobSpool {
         blob: Uint8Array;
       }>;
       return rows.map((r) => ({ id: r.id, blob: new Uint8Array(r.blob) }));
+    },
+
+    getMaxId(channelId: string): number | undefined {
+      const row = maxIdStmt.get(channelId) as { max_id: number | null } | null;
+      if (row === null || row.max_id === null) return undefined;
+      return row.max_id;
     },
 
     purgeChannel(channelId: string): void {

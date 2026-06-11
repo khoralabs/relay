@@ -1,10 +1,13 @@
 import {
+  parseRegisterActorBody,
   parseRelayChannelCreateResponse,
   parseRelayChannelJoinResponse,
   parseRelayChannelTicketResponse,
   parseRelayChannelWsNonceResponse,
   parseRelaySessionAllocateResponse,
   parseRelaySessionStatusResponse,
+  parseRosterSnapshot,
+  type RegisterActorResponse,
   type RelayChannelCreateBody,
   type RelayChannelCreateResponse,
   type RelayChannelJoinBody,
@@ -14,7 +17,13 @@ import {
   type RelaySessionAllocateBody,
   type RelaySessionAllocateResponse,
   type RelaySigner,
+  type RosterSnapshot,
 } from "@khoralabs/relay-contracts";
+import {
+  type PreKeyBundle,
+  type PublishPreKeyBundleBody,
+  parsePreKeyBundle,
+} from "@khoralabs/relay-crypto";
 
 import { signedAgentFetch } from "./agent-sign";
 
@@ -146,4 +155,66 @@ export async function releaseSessionHttp(
   const j: unknown = await res.json().catch(() => null);
   if (!res.ok) throw new Error(httpError(res.statusText, j));
   return j as { ok: true };
+}
+
+export async function registerActorHttp(
+  relayBaseUrl: string,
+  signer: RelaySigner,
+  channelId: string,
+  actorPubkey: string,
+): Promise<RegisterActorResponse> {
+  const path = `/v1/channels/${encodeURIComponent(channelId)}/actor`;
+  const bodyText = JSON.stringify(parseRegisterActorBody({ actorPubkey }));
+  const res = await signedAgentFetch(relayBaseUrl, {
+    method: "POST",
+    path,
+    bodyText,
+    signer,
+  });
+  const j: unknown = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  return j as RegisterActorResponse;
+}
+
+export async function getRosterHttp(
+  relayBaseUrl: string,
+  signer: RelaySigner,
+  channelId: string,
+): Promise<RosterSnapshot> {
+  const path = `/v1/channels/${encodeURIComponent(channelId)}/roster`;
+  const res = await signedAgentFetch(relayBaseUrl, {
+    method: "GET",
+    path,
+    bodyText: "",
+    signer,
+  });
+  const j: unknown = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  return parseRosterSnapshot(j);
+}
+
+export async function publishPreKeysHttp(
+  relayBaseUrl: string,
+  signer: RelaySigner,
+  body: PublishPreKeyBundleBody,
+): Promise<{ ok: true }> {
+  const path = "/v1/prekeys";
+  const bodyText = JSON.stringify(body);
+  const res = await signedAgentFetch(relayBaseUrl, {
+    method: "POST",
+    path,
+    bodyText,
+    signer,
+  });
+  const j: unknown = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  return j as { ok: true };
+}
+
+export async function fetchPreKeysHttp(relayBaseUrl: string, did: string): Promise<PreKeyBundle> {
+  const path = `/v1/prekeys/${encodeURIComponent(did)}`;
+  const res = await fetch(new URL(path, relayBaseUrl.replace(/\/$/, "")));
+  const j: unknown = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  return parsePreKeyBundle(j);
 }

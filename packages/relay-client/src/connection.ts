@@ -9,13 +9,22 @@ export type RelayPeerConnection = {
 export type RelayConnectOptions = {
   webSocketUrl: string;
   upgradeNonce: string;
+  replayAfter?: number;
   onBlob: (blob: Uint8Array) => void;
   onClose?: () => void;
   onError?: (err: Error) => void;
 };
 
+function webSocketUrlWithReplay(base: string, replayAfter?: number): string {
+  if (replayAfter === undefined || !Number.isFinite(replayAfter)) return base;
+  const u = new URL(base);
+  u.searchParams.set("replayAfter", String(replayAfter));
+  return u.toString();
+}
+
 export function connectRelay(opts: RelayConnectOptions): RelayPeerConnection {
-  const ws = new WebSocket(opts.webSocketUrl, [relayWsUpgradeProtocol(opts.upgradeNonce)]);
+  const wsUrl = webSocketUrlWithReplay(opts.webSocketUrl, opts.replayAfter);
+  const ws = new WebSocket(wsUrl, [relayWsUpgradeProtocol(opts.upgradeNonce)]);
   let closed = false;
 
   ws.binaryType = "arraybuffer";

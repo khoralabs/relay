@@ -49,6 +49,7 @@ export type RelayChannelTicketResponse = {
   upgradeNonce: string;
   upgradeNonceExpiresAtMs: number;
   expiresAtMs?: number;
+  lastBlobId?: number;
   policy?: RelayChannelPolicy;
 };
 
@@ -195,7 +196,7 @@ export function parseRelayChannelCreateResponse(v: unknown): RelayChannelCreateR
 /** Parses and validates a channel ticket response from the relay server. */
 export function parseRelayChannelTicketResponse(v: unknown): RelayChannelTicketResponse {
   const o = obj(v, "RelayChannelTicketResponse");
-  return {
+  const out: RelayChannelTicketResponse = {
     channelId: str(o.channelId, "channelId"),
     ticket: str(o.ticket, "ticket"),
     ...parseWsAttachFields(o),
@@ -203,6 +204,10 @@ export function parseRelayChannelTicketResponse(v: unknown): RelayChannelTicketR
     policy:
       o.policy !== undefined && o.policy !== null ? parseRelayChannelPolicy(o.policy) : undefined,
   };
+  if (typeof o.lastBlobId === "number" && Number.isInteger(o.lastBlobId) && o.lastBlobId >= 0) {
+    out.lastBlobId = o.lastBlobId;
+  }
+  return out;
 }
 
 /** Parses and validates a channel join response (extends ticket response). */

@@ -41,6 +41,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@khoralabs/relay-contracts": "workspace:*",
+        "@khoralabs/relay-crypto": "workspace:*",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -53,6 +54,25 @@
     "packages/relay-contracts": {
       "name": "@khoralabs/relay-contracts",
       "version": "0.0.0",
+      "dependencies": {
+        "@khoralabs/relay-crypto": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "typescript": "^5",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
+    "packages/relay-crypto": {
+      "name": "@khoralabs/relay-crypto",
+      "version": "0.0.0",
+      "dependencies": {
+        "@noble/curves": "^2.2.0",
+        "@noble/ed25519": "^3.1.0",
+        "lru-cache": "^11.5.1",
+      },
       "devDependencies": {
         "@types/bun": "latest",
         "typescript": "^5",
@@ -66,9 +86,9 @@
       "version": "0.0.0",
       "dependencies": {
         "@khoralabs/relay-contracts": "workspace:*",
+        "@khoralabs/relay-crypto": "workspace:*",
         "@khoralabs/sqlite-crypto": "^0.1.0",
         "@noble/ed25519": "^3.1.0",
-        "lru-cache": "^11.5.1",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -102,13 +122,19 @@
 
     "@khoralabs/relay-contracts": ["@khoralabs/relay-contracts@workspace:packages/relay-contracts"],
 
+    "@khoralabs/relay-crypto": ["@khoralabs/relay-crypto@workspace:packages/relay-crypto"],
+
     "@khoralabs/relay-server": ["@khoralabs/relay-server@workspace:apps/relay-server"],
 
     "@khoralabs/relay-server-http": ["@khoralabs/relay-server-http@workspace:packages/relay-server-http"],
 
     "@khoralabs/sqlite-crypto": ["@khoralabs/sqlite-crypto@0.1.0", "", {}, "sha512-HTpnQtwaPQDD0J5fwk9w8o47cs1HrhTBYEL5SKUlEMuvUdcqC/JgEZzwMqeT7wIZQLPdrBuPoHJMyrAkyVJGDw=="],
 
+    "@noble/curves": ["@noble/curves@2.2.0", "", { "dependencies": { "@noble/hashes": "2.2.0" } }, "sha512-T/BoHgFXirb0ENSPBquzX0rcjXeM6Lo892a2jlYJkqk83LqZx0l1Of7DzlKJ6jkpvMrkHSnAcgb5JegL8SeIkQ=="],
+
     "@noble/ed25519": ["@noble/ed25519@3.1.0", "", {}, "sha512-pfcObRY3CtvwfaG9Mt5XqZdKmAQppl37tHUeuBhDUbiwJBCVY4/A4lbMvb1xKhMDx96AqAqZpMWuBX1HulhX4g=="],
+
+    "@noble/hashes": ["@noble/hashes@2.2.0", "", {}, "sha512-IYqDGiTXab6FniAgnSdZwgWbomxpy9FtYvLKs7wCUs2a8RkITG+DFGO1DM9cr+E3/RgADRpFjrKVaJ1z6sjtEg=="],
 
     "@types/bun": ["@types/bun@1.3.14", "", { "dependencies": { "bun-types": "1.3.14" } }, "sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw=="],
 

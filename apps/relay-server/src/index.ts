@@ -30,6 +30,7 @@ if (relayProfile.mode === "single") {
 const app = createRelayApp({
   registry,
   hub,
+  spool: stores.spool,
   relayProfile,
 });
 

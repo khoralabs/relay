@@ -10,7 +10,7 @@ import { checkDefaultIpRateLimit } from "./request";
 export async function handleChannelWsUpgrade(
   deps: RelayHttpDeps,
   req: Request,
-  _url: URL,
+  url: URL,
   channelIdRaw: string,
   server: Bun.Server<RelayHubWsData>,
 ): Promise<Response | undefined> {
@@ -44,8 +44,18 @@ export async function handleChannelWsUpgrade(
   }
 
   const peerId = crypto.randomUUID();
+  const replayAfterRaw = url.searchParams.get("replayAfter");
+  const replayAfterId =
+    replayAfterRaw !== null && replayAfterRaw.length > 0
+      ? Number.parseInt(replayAfterRaw, 10)
+      : undefined;
   const upgraded = server.upgrade(req, {
-    data: { channelId, ticket: minted.ticket, peerId },
+    data: {
+      channelId,
+      ticket: minted.ticket,
+      peerId,
+      ...(replayAfterId !== undefined && Number.isFinite(replayAfterId) ? { replayAfterId } : {}),
+    },
     ...(selectedProtocol !== undefined ? { protocol: selectedProtocol } : {}),
   });
   if (!upgraded) return jsonError("WebSocket upgrade failed", 500);

@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@khoralabs/relay-contracts": "workspace:*"
+    "@khoralabs/relay-contracts": "workspace:*",
+    "@khoralabs/relay-crypto": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest",

@@ -89,6 +89,12 @@ export async function mintWsAttachForChannel(
     }
     body.ticket = minted.ticket;
     body.expiresAtMs = channelExpiresAtMs;
+    if (deps.hub.isSpoolEnabled(channelId)) {
+      const maxId = deps.spool.getMaxId(channelId);
+      if (maxId !== undefined) {
+        body.lastBlobId = maxId;
+      }
+    }
   }
   if (options?.policy !== undefined) {
     body.policy = options.policy;

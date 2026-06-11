@@ -5,3 +5,7 @@ export const channelWsNoncePathRe = /^\/v1\/channels\/([^/]+)\/ws-nonce$/;
 export const channelAllocatePathRe = /^\/v1\/channels\/([^/]+)\/sessions\/allocate$/;
 export const channelSessionStatusPathRe = /^\/v1\/channels\/([^/]+)\/sessions\/([^/]+)$/;
 export const channelReleasePathRe = /^\/v1\/channels\/([^/]+)\/sessions\/([^/]+)\/release$/;
+export const channelActorPathRe = /^\/v1\/channels\/([^/]+)\/actor$/;
+export const channelRosterPathRe = /^\/v1\/channels\/([^/]+)\/roster$/;
+export const prekeysPathRe = /^\/v1\/prekeys$/;
+export const prekeyDidPathRe = /^\/v1\/prekeys\/([^/]+)$/;

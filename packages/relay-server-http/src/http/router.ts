@@ -5,14 +5,20 @@ import { handleChannelsInviteJoin } from "./channels-join";
 import type { RelayHttpDeps } from "./deps";
 import { handleChannelMintJoinToken } from "./join-tokens";
 import {
+  channelActorPathRe,
   channelAllocatePathRe,
   channelJoinTokensPathRe,
   channelReleasePathRe,
+  channelRosterPathRe,
   channelSessionStatusPathRe,
   channelTicketPathRe,
   channelWsNoncePathRe,
   channelWsPathRe,
+  prekeyDidPathRe,
+  prekeysPathRe,
 } from "./paths";
+import { handleFetchPreKeys, handlePublishPreKeys } from "./prekeys";
+import { handleGetRoster, handleRegisterActor } from "./roster";
 import { handleSessionAllocate, handleSessionRelease, handleSessionStatus } from "./sessions";
 import { handleChannelMintTicket } from "./ticket";
 import { handleChannelWsUpgrade } from "./ws";
@@ -80,6 +86,25 @@ export async function routeRelayHttp(
   const wsNonceMatch = channelWsNoncePathRe.exec(url.pathname);
   if (req.method === "POST" && wsNonceMatch !== null) {
     return handleChannelMintWsNonce(deps, req, url, wsNonceMatch[1] as string);
+  }
+
+  const actorMatch = channelActorPathRe.exec(url.pathname);
+  if (req.method === "POST" && actorMatch !== null) {
+    return handleRegisterActor(deps, req, url, actorMatch[1] as string);
+  }
+
+  const rosterMatch = channelRosterPathRe.exec(url.pathname);
+  if (req.method === "GET" && rosterMatch !== null) {
+    return handleGetRoster(deps, req, url, rosterMatch[1] as string);
+  }
+
+  if (req.method === "POST" && prekeysPathRe.test(url.pathname)) {
+    return handlePublishPreKeys(deps, req, url);
+  }
+
+  const prekeyDidMatch = prekeyDidPathRe.exec(url.pathname);
+  if (req.method === "GET" && prekeyDidMatch !== null) {
+    return handleFetchPreKeys(deps, req, decodeURIComponent(prekeyDidMatch[1] as string));
   }
 
   const wsMatch = channelWsPathRe.exec(url.pathname);

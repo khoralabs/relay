@@ -57,5 +57,35 @@ export function ensureChannelRegistrySchema(db: Database): void {
 
     CREATE INDEX IF NOT EXISTS idx_ws_upgrade_nonces_channel
       ON ws_upgrade_nonces (channel_id, consumed_at_ms);
+
+    CREATE TABLE IF NOT EXISTS channel_member_actors (
+      channel_id TEXT NOT NULL,
+      principal_did TEXT NOT NULL,
+      actor_pubkey TEXT NOT NULL,
+      registered_at_ms INTEGER NOT NULL,
+      PRIMARY KEY (channel_id, principal_did),
+      FOREIGN KEY (channel_id, principal_did)
+        REFERENCES channel_members(channel_id, principal_did) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS prekey_bundles (
+      principal_did TEXT PRIMARY KEY,
+      identity_key TEXT NOT NULL,
+      spk_id INTEGER NOT NULL,
+      spk_pub TEXT NOT NULL,
+      spk_sig TEXT NOT NULL,
+      published_at_ms INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS prekey_otks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      principal_did TEXT NOT NULL,
+      otk_id INTEGER NOT NULL,
+      otk_pub TEXT NOT NULL,
+      claimed INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_prekey_otks_principal
+      ON prekey_otks (principal_did, claimed);
   `);
 }

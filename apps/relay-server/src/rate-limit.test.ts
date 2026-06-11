@@ -21,10 +21,11 @@ test("rate limiter returns 429", async () => {
 });
 
 test("channels create rate limit → 429", async () => {
-  const { app, cleanup } = await createTestRelayApp();
+  const { app, spool, cleanup } = await createTestRelayApp();
   const limitedApp = createRelayApp({
     registry: app.registry,
     hub: app.hub,
+    spool,
     auth: app.auth,
     rateLimiters: {
       ...createRelayRateLimiters(),

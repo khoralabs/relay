@@ -1,5 +1,6 @@
 import {
   AGENT_REQUEST_HEADER,
+  type AgentRequestEnvelope,
   canonicalAgentRequestMessage,
   canonicalAgentRequestPath,
   type RelaySigner,
@@ -7,14 +8,30 @@ import {
   signatureBytesToB64Url,
 } from "@khoralabs/relay-contracts";
 
-export async function signAgentRequest(input: {
+export type SignAgentRequestInput = {
   method: string;
   path: string;
   bodyText: string;
   signer: RelaySigner;
-}): Promise<Record<string, string>> {
-  const timestampMs = Date.now();
-  const nonce = randomAgentRequestNonce();
+  /** Override the clock (defaults to `Date.now`). */
+  now?: () => number;
+  /** Override the nonce generator (defaults to `randomAgentRequestNonce`). */
+  nonce?: () => string;
+};
+
+export type SignedAgentRequest = {
+  /** Headers ready to merge into a fetch request. */
+  headers: Record<string, string>;
+  envelope: AgentRequestEnvelope;
+};
+
+/**
+ * Build the four `X-Agent-*` headers (plus the parsed envelope) for the given
+ * METHOD + PATH + body using the signer's DID.
+ */
+export async function signAgentRequest(input: SignAgentRequestInput): Promise<SignedAgentRequest> {
+  const timestampMs = (input.now ?? Date.now)();
+  const nonce = (input.nonce ?? randomAgentRequestNonce)();
   const message = await canonicalAgentRequestMessage({
     method: input.method,
     path: input.path,
@@ -23,11 +40,16 @@ export async function signAgentRequest(input: {
     bodyText: input.bodyText,
   });
   const sigBytes = await input.signer.sign(message);
-  return {
+  const signatureB64Url = signatureBytesToB64Url(sigBytes);
+  const headers: Record<string, string> = {
     [AGENT_REQUEST_HEADER.did]: input.signer.did,
     [AGENT_REQUEST_HEADER.ts]: String(timestampMs),
     [AGENT_REQUEST_HEADER.nonce]: nonce,
-    [AGENT_REQUEST_HEADER.sig]: signatureBytesToB64Url(sigBytes),
+    [AGENT_REQUEST_HEADER.sig]: signatureB64Url,
+  };
+  return {
+    headers,
+    envelope: { did: input.signer.did, timestampMs, nonce, signatureB64Url },
   };
 }
 
@@ -50,7 +72,7 @@ export async function signedAgentFetch(
           input.signedQueryKeys,
         )
       : input.path;
-  const headers = await signAgentRequest({
+  const { headers } = await signAgentRequest({
     method: input.method,
     path,
     bodyText,

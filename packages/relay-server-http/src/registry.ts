@@ -4,7 +4,9 @@ import {
   type RelayAdmissionMode,
   type RelayChannelPolicy,
   type RelaySessionQuota,
+  type RosterSnapshot,
 } from "@khoralabs/relay-contracts";
+import type { PreKeyBundle, PublishPreKeyBundleBody } from "@khoralabs/relay-crypto";
 
 import { hashInviteToken } from "./invites";
 import {
@@ -356,6 +358,128 @@ export function createChannelRegistry(db: Database) {
     consumeWsUpgradeNonce(channelId: string, nonce: string, nowMs: number): boolean {
       const result = consumeWsNonceStmt.run(nowMs, hashWsUpgradeNonce(nonce), channelId, nowMs);
       return result.changes > 0;
+    },
+
+    registerActor(
+      channelId: string,
+      principalDid: string,
+      actorPubkey: string,
+      nowMs: number,
+    ): void {
+      db.run(
+        `INSERT INTO channel_member_actors (channel_id, principal_did, actor_pubkey, registered_at_ms)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT(channel_id, principal_did) DO UPDATE SET
+           actor_pubkey = excluded.actor_pubkey,
+           registered_at_ms = excluded.registered_at_ms`,
+        [channelId, principalDid, actorPubkey, nowMs],
+      );
+    },
+
+    getRosterSnapshot(channelId: string, _nowMs: number): RosterSnapshot {
+      const rows = db
+        .query<
+          {
+            principal_did: string;
+            actor_pubkey: string | null;
+            joined_at_ms: number;
+          },
+          [string]
+        >(
+          `SELECT m.principal_did, a.actor_pubkey, m.joined_at_ms
+           FROM channel_members m
+           LEFT JOIN channel_member_actors a
+             ON m.channel_id = a.channel_id AND m.principal_did = a.principal_did
+           WHERE m.channel_id = ? AND m.status = 'active'`,
+        )
+        .all(channelId);
+      return {
+        channelId,
+        members: rows.map((r) => ({
+          principalUri: r.principal_did,
+          joinedAtMs: r.joined_at_ms,
+          ...(r.actor_pubkey !== null && r.actor_pubkey.length > 0
+            ? { actorPubkey: r.actor_pubkey }
+            : {}),
+        })),
+      };
+    },
+
+    publishPreKeyBundle(did: string, body: PublishPreKeyBundleBody, nowMs: number): void {
+      db.run("BEGIN");
+      try {
+        db.run(
+          `INSERT INTO prekey_bundles (principal_did, identity_key, spk_id, spk_pub, spk_sig, published_at_ms)
+           VALUES (?, ?, ?, ?, ?, ?)
+           ON CONFLICT(principal_did) DO UPDATE SET
+             identity_key = excluded.identity_key,
+             spk_id = excluded.spk_id,
+             spk_pub = excluded.spk_pub,
+             spk_sig = excluded.spk_sig,
+             published_at_ms = excluded.published_at_ms`,
+          [
+            did,
+            body.identityKey,
+            body.signedPreKey.keyId,
+            body.signedPreKey.publicKey,
+            body.signedPreKey.signature,
+            nowMs,
+          ],
+        );
+        db.run(`DELETE FROM prekey_otks WHERE principal_did = ? AND claimed = 0`, [did]);
+        const insertOtk = db.prepare(
+          `INSERT INTO prekey_otks (principal_did, otk_id, otk_pub, claimed) VALUES (?, ?, ?, 0)`,
+        );
+        for (const otk of body.oneTimePreKeys) {
+          insertOtk.run(did, otk.keyId, otk.publicKey);
+        }
+        db.run("COMMIT");
+      } catch (e) {
+        db.run("ROLLBACK");
+        throw e;
+      }
+    },
+
+    fetchPreKeyBundle(did: string): PreKeyBundle | undefined {
+      const row = db
+        .query<
+          {
+            identity_key: string;
+            spk_id: number;
+            spk_pub: string;
+            spk_sig: string;
+          },
+          [string]
+        >(
+          `SELECT identity_key, spk_id, spk_pub, spk_sig FROM prekey_bundles WHERE principal_did = ?`,
+        )
+        .get(did);
+      if (row === undefined || row === null) return undefined;
+
+      const otk = db
+        .query<{ id: number; otk_id: number; otk_pub: string }, [string]>(
+          `SELECT id, otk_id, otk_pub FROM prekey_otks
+           WHERE principal_did = ? AND claimed = 0
+           ORDER BY id ASC LIMIT 1`,
+        )
+        .get(did);
+
+      const bundle: PreKeyBundle = {
+        did,
+        identityKey: row.identity_key,
+        signedPreKey: {
+          keyId: row.spk_id,
+          publicKey: row.spk_pub,
+          signature: row.spk_sig,
+        },
+      };
+
+      if (otk !== undefined && otk !== null) {
+        db.run(`UPDATE prekey_otks SET claimed = 1 WHERE id = ?`, [otk.id]);
+        bundle.oneTimePreKey = { keyId: otk.otk_id, publicKey: otk.otk_pub };
+      }
+
+      return bundle;
     },
   };
 }

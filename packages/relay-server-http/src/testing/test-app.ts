@@ -18,7 +18,12 @@ export async function createTestRelayApp(opts?: {
   relayProfile?: RelayProfile;
   singleBootstrap?: SingleChannelConfig;
   dbPath?: string;
-}): Promise<{ app: RelayApp; db: Database; cleanup(): void }> {
+}): Promise<{
+  app: RelayApp;
+  db: Database;
+  spool: ReturnType<typeof createRelayStores>["spool"];
+  cleanup(): void;
+}> {
   let cleanupDir: string | undefined;
   const dbPath =
     opts?.dbPath ??
@@ -47,12 +52,14 @@ export async function createTestRelayApp(opts?: {
   const app = createRelayApp({
     registry,
     hub,
+    spool: stores.spool,
     relayProfile,
   });
 
   return {
     app,
     db,
+    spool: stores.spool,
     cleanup() {
       db.close();
       if (cleanupDir !== undefined) {

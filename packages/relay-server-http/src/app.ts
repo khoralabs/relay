@@ -1,4 +1,5 @@
 import { createRelayAuth, type RelayAuth } from "./auth";
+import type { BlobSpool } from "./blob-spool";
 import type { RelayHttpDeps } from "./http/deps";
 import { routeRelayHttp } from "./http/router";
 import { createRelayRateLimiters, type RelayRateLimiters } from "./rate-limit-buckets";
@@ -20,6 +21,7 @@ export type RelayApp = {
 export type CreateRelayAppOptions = {
   registry: ChannelRegistry;
   hub: RelayHub;
+  spool: BlobSpool;
   auth?: RelayAuth | undefined;
   rateLimiters?: RelayRateLimiters | undefined;
   relayProfile?: RelayProfile | undefined;
@@ -38,6 +40,7 @@ export function createRelayApp(opts: CreateRelayAppOptions): RelayApp {
 
   const httpDeps: RelayHttpDeps = {
     hub: opts.hub,
+    spool: opts.spool,
     registry: opts.registry,
     auth,
     rateLimiters,
