@@ -28,8 +28,9 @@ function ed25519PublicKeyFromDid(did: string): Uint8Array {
   try {
     return ed25519PublicKeyBytesFromDid(did);
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    throw new AuthError(msg, 401);
+    const detail = e instanceof Error ? e.message : String(e);
+    console.error("agent DID public key parse failed:", detail);
+    throw new AuthError("invalid agent DID", 401);
   }
 }
 

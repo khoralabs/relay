@@ -69,6 +69,13 @@ export function canonicalAgentRequestPath(
   return qs.length > 0 ? `${pathname}?${qs}` : pathname;
 }
 
+function parseStrictUnsignedInt(raw: string): number | undefined {
+  if (!/^\d+$/.test(raw)) return undefined;
+  const n = Number(raw);
+  if (!Number.isSafeInteger(n) || n < 0) return undefined;
+  return n;
+}
+
 function parseEnvelopeFromGetters(
   get: (key: string) => string | null,
   did: string | null,
@@ -87,8 +94,8 @@ function parseEnvelopeFromGetters(
   ) {
     return undefined;
   }
-  const timestampMs = Number.parseInt(tsRaw, 10);
-  if (!Number.isFinite(timestampMs) || timestampMs < 0) return undefined;
+  const timestampMs = parseStrictUnsignedInt(tsRaw);
+  if (timestampMs === undefined) return undefined;
   return { did, timestampMs, nonce, signatureB64Url: sig };
 }
 
