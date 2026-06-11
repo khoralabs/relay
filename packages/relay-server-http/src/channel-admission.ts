@@ -1,12 +1,10 @@
 import type { Database } from "bun:sqlite";
-import { decryptPairingSecretHex, encryptPairingSecretHex } from "./pairing-secret-cipher";
-
-export type ChannelAdmissionRecord = {
-  channelId: string;
-  pairingSecretHex: string;
-  createdAtMs: number;
-  expiresAtMs: number;
-};
+import type { ChannelAdmissionRecord, ChannelAdmissionStore } from "@khoralabs/relay-admission";
+import {
+  decryptPairingSecretHex,
+  encryptPairingSecretHex,
+  pairingSecretKeyFromEnv,
+} from "@khoralabs/relay-crypto";
 
 export function ensureChannelAdmissionSchema(db: Database): void {
   db.run(`
@@ -18,13 +16,6 @@ export function ensureChannelAdmissionSchema(db: Database): void {
     );
   `);
 }
-
-export type ChannelAdmissionStore = {
-  upsertChannelAdmission(record: ChannelAdmissionRecord): void;
-  getChannelAdmissionIfActive(channelId: string, nowMs: number): ChannelAdmissionRecord | undefined;
-  purgeExpiredChannels(nowMs: number): number;
-  purgeChannel(channelId: string): void;
-};
 
 export function createChannelAdmissionStore(
   db: Database,
@@ -81,4 +72,11 @@ export function createChannelAdmissionStore(
       deleteStmt.run(channelId);
     },
   };
+}
+
+export function createChannelAdmissionStoreFromEnv(
+  db: Database,
+  env: NodeJS.ProcessEnv = process.env,
+): ChannelAdmissionStore {
+  return createChannelAdmissionStore(db, pairingSecretKeyFromEnv(env));
 }

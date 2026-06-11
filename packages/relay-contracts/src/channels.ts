@@ -6,6 +6,9 @@ export type RelaySessionQuota =
 
 export const DEFAULT_RELAY_SESSION_QUOTA: RelaySessionQuota = { mode: "principal", measure: 8 };
 
+/** HTTP header for one-time WS upgrade nonces. */
+export const RELAY_WS_UPGRADE_NONCE_HEADER = "X-Relay-Upgrade-Nonce" as const;
+
 /** Subprotocol prefix for one-time WS upgrade nonces (`Sec-WebSocket-Protocol`). */
 export const RELAY_WS_NONCE_PREFIX = "relay.nonce.";
 

@@ -21,6 +21,7 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@khoralabs/relay-admission": "workspace:*",
     "@khoralabs/relay-contracts": "workspace:*",
     "@khoralabs/relay-crypto": "workspace:*",
     "@khoralabs/sqlite-crypto": "^0.1.0",

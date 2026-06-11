@@ -36,6 +36,20 @@
         "typescript": "^5",
       },
     },
+    "packages/relay-admission": {
+      "name": "@khoralabs/relay-admission",
+      "version": "0.0.0",
+      "dependencies": {
+        "@khoralabs/relay-contracts": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "typescript": "^5",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
     "packages/relay-client": {
       "name": "@khoralabs/relay-client",
       "version": "0.0.0",
@@ -85,6 +99,7 @@
       "name": "@khoralabs/relay-server-http",
       "version": "0.0.0",
       "dependencies": {
+        "@khoralabs/relay-admission": "workspace:*",
         "@khoralabs/relay-contracts": "workspace:*",
         "@khoralabs/relay-crypto": "workspace:*",
         "@khoralabs/sqlite-crypto": "^0.1.0",
@@ -117,6 +132,8 @@
     "@biomejs/cli-win32-arm64": ["@biomejs/cli-win32-arm64@2.4.16", "", { "os": "win32", "cpu": "arm64" }, "sha512-0rgImMsNb5v/chhkIFe3wu7PEFClS6RBAYUijGL9UsYN3PanSaoK24HSSuSJb1pYbYYVjzAyZTl3gtjJ84BM8A=="],
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.4.16", "", { "os": "win32", "cpu": "x64" }, "sha512-Kp85jgoBHa05gix6UIRjfCDiUV3w/8VIdZ247VyyO2gEjaw12WEVhdIjlxp/AMzXxqxQwbxNTDVZ3Mwd2RG5rw=="],
+
+    "@khoralabs/relay-admission": ["@khoralabs/relay-admission@workspace:packages/relay-admission"],
 
     "@khoralabs/relay-client": ["@khoralabs/relay-client@workspace:packages/relay-client"],
 

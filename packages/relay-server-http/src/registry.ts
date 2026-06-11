@@ -1,5 +1,10 @@
 import type { Database } from "bun:sqlite";
 import {
+  DEFAULT_WS_UPGRADE_NONCE_TTL_MS,
+  hashWsUpgradeNonce,
+  randomWsUpgradeNonce,
+} from "@khoralabs/relay-admission";
+import {
   DEFAULT_RELAY_SESSION_QUOTA,
   type RelayAdmissionMode,
   type RelayChannelPolicy,
@@ -7,13 +12,7 @@ import {
   type RosterSnapshot,
 } from "@khoralabs/relay-contracts";
 import type { PreKeyBundle, PublishPreKeyBundleBody } from "@khoralabs/relay-crypto";
-
 import { hashInviteToken } from "./invites";
-import {
-  DEFAULT_WS_UPGRADE_NONCE_TTL_MS,
-  hashWsUpgradeNonce,
-  randomWsUpgradeNonce,
-} from "./ws-upgrade-nonce";
 
 export type ChannelRow = {
   channelId: string;

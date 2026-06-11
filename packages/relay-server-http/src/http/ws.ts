@@ -1,8 +1,8 @@
+import { wsUpgradeNonceFromRequest } from "@khoralabs/relay-admission";
 import { relayWsUpgradeProtocol } from "@khoralabs/relay-contracts";
 
 import type { RelayHubWsData } from "../relay-hub";
 import { jsonError } from "../responses";
-import { wsUpgradeNonceFromRequest } from "../ws-upgrade-nonce";
 import { resolveChannelId } from "./channel-id";
 import type { RelayHttpDeps } from "./deps";
 import { checkDefaultIpRateLimit } from "./request";

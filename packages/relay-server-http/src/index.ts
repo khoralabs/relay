@@ -1,3 +1,4 @@
+export type { ChannelAdmissionRecord, ChannelAdmissionStore } from "@khoralabs/relay-admission";
 export {
   type CreateRelayAppOptions,
   createRelayApp,
@@ -19,8 +20,8 @@ export {
   ensureBlobSpoolSchema,
 } from "./blob-spool";
 export {
-  type ChannelAdmissionStore,
   createChannelAdmissionStore,
+  createChannelAdmissionStoreFromEnv,
   ensureChannelAdmissionSchema,
 } from "./channel-admission";
 export {

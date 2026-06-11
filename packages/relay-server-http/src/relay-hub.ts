@@ -1,11 +1,11 @@
-import type { ServerWebSocket } from "bun";
-import type { BlobSpool } from "./blob-spool";
-import type { ChannelAdmissionStore } from "./channel-admission";
 import {
+  type ChannelAdmissionStore,
   generateChannelSecretHex,
   signChannelTicket,
   verifyChannelTicketClaims,
-} from "./channel-ticket";
+} from "@khoralabs/relay-admission";
+import type { ServerWebSocket } from "bun";
+import type { BlobSpool } from "./blob-spool";
 
 export type RelayHubWsData = {
   channelId: string;

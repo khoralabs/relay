@@ -25,11 +25,11 @@ This repository provides a DID-authenticated blob transport framework (contracts
 
 ### Channel pairing secrets (`channels.pairing_secret_hex`)
 
-The relay server SQLite adapter **encrypts channel pairing secrets at rest** with AES-256-GCM before writing to SQLite. Hosts **must** supply a 32-byte `pairingSecretKey` (from KMS or `RELAY_PAIRING_SECRET_ENCRYPTION_KEY`). SQLCipher whole-file encryption is complementary, not a substitute — field encryption limits blast radius when only the DB file is copied without the field key.
+`@khoralabs/relay-crypto` **encrypts channel pairing secrets at rest** with AES-256-GCM before `@khoralabs/relay-admission` writes them to SQLite (`relay_rooms`). Hosts **must** supply a 32-byte key (from KMS or `RELAY_PAIRING_SECRET_ENCRYPTION_KEY`). SQLCipher whole-file encryption is complementary, not a substitute — field encryption limits blast radius when only the DB file is copied without the field key.
 
 Production deployments **should**:
 
-1. Set `RELAY_PAIRING_SECRET_ENCRYPTION_KEY` (or pass `pairingSecretKey` from your KMS) when starting the relay.
+1. Set `RELAY_PAIRING_SECRET_ENCRYPTION_KEY` when starting the relay (`relay-server-http` `createChannelAdmissionStoreFromEnv` reads it automatically).
 2. Restrict relay DB, `-wal`, and `-shm` files to owner-only (`0o600`).
 3. Rotate or purge expired channels so stale admission rows do not accumulate.
 

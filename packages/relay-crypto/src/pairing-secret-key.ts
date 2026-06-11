@@ -1,4 +1,4 @@
-import { RelaySqliteError } from "./pairing-secret-cipher";
+import { RelayCryptoError } from "./pairing-secret-cipher";
 
 export const PAIRING_SECRET_ENCRYPTION_KEY_ENV = "RELAY_PAIRING_SECRET_ENCRYPTION_KEY" as const;
 
@@ -8,7 +8,7 @@ export const TEST_PAIRING_SECRET_KEY_HEX =
 export function pairingSecretKeyFromHex(hex: string): Uint8Array {
   const trimmed = hex.trim();
   if (!/^[0-9a-f]{64}$/i.test(trimmed)) {
-    throw new RelaySqliteError("pairing secret encryption key must be 32-byte hex (64 characters)");
+    throw new RelayCryptoError("pairing secret encryption key must be 32-byte hex (64 characters)");
   }
   const out = new Uint8Array(32);
   for (let i = 0; i < 32; i++) {
@@ -20,7 +20,7 @@ export function pairingSecretKeyFromHex(hex: string): Uint8Array {
 export function pairingSecretKeyFromUtf8(raw: string): Uint8Array {
   const bytes = new TextEncoder().encode(raw);
   if (bytes.length < 32) {
-    throw new RelaySqliteError(
+    throw new RelayCryptoError(
       "pairing secret encryption key must be 32-byte hex or UTF-8 string of at least 32 bytes",
     );
   }
@@ -39,10 +39,10 @@ export function pairingSecretKeyFromEnv(
     return pairingSecretKeyFromUtf8(raw);
   }
   if (env.NODE_ENV === "production") {
-    throw new RelaySqliteError(`${PAIRING_SECRET_ENCRYPTION_KEY_ENV} is required in production`);
+    throw new RelayCryptoError(`${PAIRING_SECRET_ENCRYPTION_KEY_ENV} is required in production`);
   }
   if (options?.allowDevFallback === false) {
-    throw new RelaySqliteError(`${PAIRING_SECRET_ENCRYPTION_KEY_ENV} is required`);
+    throw new RelayCryptoError(`${PAIRING_SECRET_ENCRYPTION_KEY_ENV} is required`);
   }
   return pairingSecretKeyFromHex(TEST_PAIRING_SECRET_KEY_HEX);
 }

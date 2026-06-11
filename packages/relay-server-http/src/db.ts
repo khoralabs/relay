@@ -3,8 +3,7 @@ import { chmodSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { openEncryptedDatabaseSync, SqliteCryptoError } from "@khoralabs/sqlite-crypto";
 import { createBlobSpool } from "./blob-spool";
-import { createChannelAdmissionStore } from "./channel-admission";
-import { pairingSecretKeyFromEnv } from "./pairing-secret-key";
+import { createChannelAdmissionStoreFromEnv } from "./channel-admission";
 import { ensureChannelRegistrySchema } from "./registry-schema";
 
 export const RELAY_SQLCIPHER_ENV = "RELAY_SQLCIPHER_KEY";
@@ -68,9 +67,8 @@ export function openRelayDatabase(path?: string, key?: string): Database {
 }
 
 export function createRelayStores(db: Database) {
-  const pairingSecretKey = pairingSecretKeyFromEnv();
   return {
-    admission: createChannelAdmissionStore(db, pairingSecretKey),
+    admission: createChannelAdmissionStoreFromEnv(db),
     spool: createBlobSpool(db),
   };
 }

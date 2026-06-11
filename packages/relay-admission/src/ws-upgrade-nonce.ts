@@ -1,10 +1,10 @@
 import { createHash } from "node:crypto";
 
-import { RELAY_WS_NONCE_PREFIX } from "@khoralabs/relay-contracts";
-
-import { RELAY_HTTP_HEADER } from "./http-headers";
+import { RELAY_WS_NONCE_PREFIX, RELAY_WS_UPGRADE_NONCE_HEADER } from "@khoralabs/relay-contracts";
 
 export const DEFAULT_WS_UPGRADE_NONCE_TTL_MS = 60_000;
+
+const SEC_WEB_SOCKET_PROTOCOL = "Sec-WebSocket-Protocol";
 
 export function randomWsUpgradeNonce(): string {
   const bytes = new Uint8Array(32);
@@ -29,7 +29,7 @@ export function wsUpgradeNonceFromProtocolHeader(header: string | null): string 
 }
 
 export function wsUpgradeNonceFromRequest(req: Request): string | undefined {
-  const fromHeader = req.headers.get(RELAY_HTTP_HEADER.upgradeNonce)?.trim();
+  const fromHeader = req.headers.get(RELAY_WS_UPGRADE_NONCE_HEADER)?.trim();
   if (fromHeader !== undefined && fromHeader.length > 0) return fromHeader;
-  return wsUpgradeNonceFromProtocolHeader(req.headers.get(RELAY_HTTP_HEADER.secWebSocketProtocol));
+  return wsUpgradeNonceFromProtocolHeader(req.headers.get(SEC_WEB_SOCKET_PROTOCOL));
 }
