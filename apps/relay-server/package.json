@@ -1,5 +1,5 @@
 {
-  "name": "@khoralabs/relay-server-app",
+  "name": "@khoralabs/relay-server",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@khoralabs/relay-server": "workspace:*"
+    "@khoralabs/relay-server-http": "workspace:*"
   },
   "devDependencies": {
     "@khoralabs/relay-client": "workspace:*",

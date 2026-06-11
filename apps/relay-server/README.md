@@ -1,4 +1,4 @@
-# @khoralabs/relay-server
+# @khoralabs/relay-server-http
 
 To install dependencies:
 

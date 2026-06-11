@@ -6,7 +6,7 @@ import {
   createTestRelayApp,
   signedFetch,
   signedPath,
-} from "@khoralabs/relay-server/testing";
+} from "@khoralabs/relay-server-http/testing";
 
 function serve(app: Awaited<ReturnType<typeof createTestRelayApp>>["app"]) {
   return Bun.serve({

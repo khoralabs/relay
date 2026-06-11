@@ -20,10 +20,10 @@
       },
     },
     "apps/relay-server": {
-      "name": "@khoralabs/relay-server-app",
+      "name": "@khoralabs/relay-server",
       "version": "0.0.0",
       "dependencies": {
-        "@khoralabs/relay-server": "workspace:*",
+        "@khoralabs/relay-server-http": "workspace:*",
       },
       "devDependencies": {
         "@khoralabs/relay-client": "workspace:*",
@@ -61,8 +61,8 @@
         "typescript": "^5",
       },
     },
-    "packages/relay-server": {
-      "name": "@khoralabs/relay-server",
+    "packages/relay-server-http": {
+      "name": "@khoralabs/relay-server-http",
       "version": "0.0.0",
       "dependencies": {
         "@khoralabs/relay-contracts": "workspace:*",
@@ -102,9 +102,9 @@
 
     "@khoralabs/relay-contracts": ["@khoralabs/relay-contracts@workspace:packages/relay-contracts"],
 
-    "@khoralabs/relay-server": ["@khoralabs/relay-server@workspace:packages/relay-server"],
+    "@khoralabs/relay-server": ["@khoralabs/relay-server@workspace:apps/relay-server"],
 
-    "@khoralabs/relay-server-app": ["@khoralabs/relay-server-app@workspace:apps/relay-server"],
+    "@khoralabs/relay-server-http": ["@khoralabs/relay-server-http@workspace:packages/relay-server-http"],
 
     "@khoralabs/sqlite-crypto": ["@khoralabs/sqlite-crypto@0.1.0", "", {}, "sha512-HTpnQtwaPQDD0J5fwk9w8o47cs1HrhTBYEL5SKUlEMuvUdcqC/JgEZzwMqeT7wIZQLPdrBuPoHJMyrAkyVJGDw=="],
 
