@@ -285,34 +285,51 @@ export function createChannelRegistry(db: Database) {
           ? [input.partyADid, input.partyBDid]
           : [input.partyBDid, input.partyADid];
 
-      if (input.maxSessions.mode === "global") {
-        const total = this.countActiveSessions(input.channelId);
-        if (total >= input.maxSessions.measure) {
-          return { ok: false, reason: "channel session capacity reached" };
-        }
-      } else {
-        for (const did of [a, b]) {
-          const quota = this.getMemberSessionQuota(input.channelId, did);
-          if (quota === undefined) {
-            return { ok: false, reason: "member not found" };
-          }
-          if (quota === null) {
-            continue;
-          }
-          if (quota <= 0) {
-            return { ok: false, reason: "member session budget not allocated" };
-          }
-          const used = this.countActiveSessionsForMember(input.channelId, did);
-          if (used >= quota) {
-            return { ok: false, reason: "member session quota exceeded" };
-          }
-        }
-      }
-
+      db.run("BEGIN IMMEDIATE");
+      let outcome: { ok: true } | { ok: false; reason: string };
       try {
-        insertChainStmt.run(input.sessionId, input.channelId, a, b, input.createdAtMs);
-        return { ok: true };
+        if (input.maxSessions.mode === "global") {
+          const total = this.countActiveSessions(input.channelId);
+          if (total >= input.maxSessions.measure) {
+            outcome = { ok: false, reason: "channel session capacity reached" };
+          } else {
+            insertChainStmt.run(input.sessionId, input.channelId, a, b, input.createdAtMs);
+            outcome = { ok: true };
+          }
+        } else {
+          outcome = { ok: true };
+          for (const did of [a, b]) {
+            const quota = this.getMemberSessionQuota(input.channelId, did);
+            if (quota === undefined) {
+              outcome = { ok: false, reason: "member not found" };
+              break;
+            }
+            if (quota === null) {
+              continue;
+            }
+            if (quota <= 0) {
+              outcome = { ok: false, reason: "member session budget not allocated" };
+              break;
+            }
+            const used = this.countActiveSessionsForMember(input.channelId, did);
+            if (used >= quota) {
+              outcome = { ok: false, reason: "member session quota exceeded" };
+              break;
+            }
+          }
+          if (outcome.ok) {
+            insertChainStmt.run(input.sessionId, input.channelId, a, b, input.createdAtMs);
+          }
+        }
+
+        if (outcome.ok) {
+          db.run("COMMIT");
+        } else {
+          db.run("ROLLBACK");
+        }
+        return outcome;
       } catch {
+        db.run("ROLLBACK");
         return { ok: false, reason: "session slot already allocated" };
       }
     },
