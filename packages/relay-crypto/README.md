@@ -1,15 +1,23 @@
 # @khoralabs/relay-crypto
 
-To install dependencies:
+Cryptographic primitives for the relay: DID parsing, ed25519 signing, X3DH key exchange, and prekey management.
+
+## Install
 
 ```bash
-bun install
+bun add @khoralabs/relay-crypto
 ```
 
-To run:
+## API
 
-```bash
-bun run index.ts
-```
+| Export | Description |
+|---|---|
+| `ed25519PublicKeyBytesFromDid` | Extract raw public key bytes from a `did:key` DID |
+| `base58Decode` / `bytesToHex` / `hexToBytes` | Encoding helpers |
+| `RelaySigner` / `PersistableRelaySigner` | Signing interface and persistable variant |
+| `buildX3dhInitiator` / `deriveX3dhResponder` | X3DH key exchange (initiator and responder sides) |
+| `generateSignedPreKey` / `generateOneTimePreKeys` | Prekey generation |
+| `verifySignedPreKey` | Signed prekey verification |
+| `parsePreKeyBundle` / `parsePublishPreKeyBundleBody` / `parseX3dhInitMessage` | Prekey message parsing |
 
-This project was created using `bun init` in bun v1.3.14. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+Built on [@noble/curves](https://github.com/paulmillr/noble-curves) and [@noble/ed25519](https://github.com/paulmillr/noble-ed25519).

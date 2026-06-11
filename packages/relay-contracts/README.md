@@ -1,15 +1,17 @@
-# relay-contracts
+# @khoralabs/relay-contracts
 
-To install dependencies:
+Shared TypeScript types used by both the relay server and client. No runtime dependencies beyond `@khoralabs/relay-crypto`.
+
+## Contents
+
+| Module | Description |
+|---|---|
+| `auth-wire` | `Agent-Request` header format and DID auth wire types |
+| `channels` | Channel creation, join, ticket, and session types |
+| `roster` | Actor registration and roster response types |
+
+## Install
 
 ```bash
-bun install
+bun add @khoralabs/relay-contracts
 ```
-
-To run:
-
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.3.14. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.

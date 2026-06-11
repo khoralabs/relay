@@ -1,15 +1,42 @@
-# @khoralabs/relay-server-http
+# @khoralabs/relay-server
 
-To install dependencies:
+Deployable relay server binary — a DID-authenticated encrypted blob transport hub with SQLite persistence.
+
+## Overview
+
+Wraps `@khoralabs/relay-server-http` into a runnable `Bun.serve` process. Supports two modes:
+
+- **pool** — multi-channel, open creation (default)
+- **single** — one pre-configured channel bootstrapped at startup
+
+## Run
 
 ```bash
-bun install
+bun run start
 ```
 
-To run:
+Default port: **8790** (override with `PORT`).
+
+## Configuration
+
+| Variable | Description | Default |
+|---|---|---|
+| `PORT` | Server port | `8790` |
+| `RELAY_MODE` | `pool` or `single` | `pool` |
+| `RELAY_CHANNEL_ID` | Channel ID for single mode | — |
+| `RELAY_CHANNEL_CREATOR_DID` | Creator DID for single mode | — |
+| `RELAY_CHANNEL_TTL_MS` | Channel TTL in milliseconds | — |
+| `RELAY_MAX_POPULATION` | Max roster size per channel | — |
+| `RELAY_MAX_SESSIONS` | Max concurrent sessions (JSON) | — |
+| `RELAY_MAX_CHANNELS` | Pool mode channel cap | `10000` |
+| `RELAY_DB_PATH` | SQLite path (`:memory:` supported) | `packages/data/relay.sqlite` |
+| `RELAY_SQLCIPHER_KEY` | Whole-file DB encryption key | — (required in prod) |
+| `RELAY_PAIRING_SECRET_ENCRYPTION_KEY` | Field-level pairing secret encryption | — |
+
+## Tests
 
 ```bash
-bun run index.ts
+bun test
 ```
 
-This project was created using `bun init` in bun v1.3.14. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+Tests cover DID auth, rate limiting, and end-to-end channel/session flows.

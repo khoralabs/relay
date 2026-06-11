@@ -8,15 +8,16 @@ The relay provides a generic, deployable hub for opaque encrypted byte streams a
 
 | Package | Description |
 |---|---|
-| `packages/relay-contracts` | Shared Zod schemas and TypeScript types (auth wire, channels, sessions, roster) |
-| `packages/relay-server` | Bun HTTP + WebSocket relay server (channel management, HMAC tickets, DID auth) |
+| `packages/relay-contracts` | Shared TypeScript types for auth wire, channels, sessions, and roster |
+| `packages/relay-crypto` | DID utilities, X3DH key exchange, prekeys, and ed25519 signing |
+| `packages/relay-server-http` | Bun HTTP + WebSocket relay server library (channel management, HMAC tickets, DID auth) |
 | `packages/relay-client` | TypeScript client SDK for connecting to a relay and managing sessions |
 
 ## Apps
 
 | App | Description |
 |---|---|
-| `apps/relay` | Standalone relay server binary with SQLite persistence |
+| `apps/relay-server` | Standalone relay server binary with SQLite persistence |
 
 ## Getting started
 
