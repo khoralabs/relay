@@ -56,10 +56,22 @@ function parseEnvelopeJson(stored: string): PairingSecretEnvelopeV1 {
   return rec as PairingSecretEnvelopeV1;
 }
 
-export function encryptPairingSecretHex(hex: string, keyBytes: Uint8Array): string {
+function pairingSecretAad(channelId: string): Buffer {
+  if (channelId.length === 0) {
+    throw new RelayCryptoError("pairing secret envelope: channel id required");
+  }
+  return Buffer.from(channelId, "utf8");
+}
+
+export function encryptPairingSecretHex(
+  hex: string,
+  channelId: string,
+  keyBytes: Uint8Array,
+): string {
   const key = normalizeAesKey(keyBytes);
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", key, iv);
+  cipher.setAAD(pairingSecretAad(channelId));
   const ct = Buffer.concat([cipher.update(hex, "utf8"), cipher.final()]);
   const tag = cipher.getAuthTag();
   const envelope: PairingSecretEnvelopeV1 = {
@@ -71,7 +83,11 @@ export function encryptPairingSecretHex(hex: string, keyBytes: Uint8Array): stri
   return PAIRING_SECRET_ENVELOPE_MAGIC + JSON.stringify(envelope);
 }
 
-export function decryptPairingSecretHex(stored: string, keyBytes: Uint8Array): string {
+export function decryptPairingSecretHex(
+  stored: string,
+  channelId: string,
+  keyBytes: Uint8Array,
+): string {
   if (!isEncryptedPairingSecret(stored)) {
     return stored;
   }
@@ -89,6 +105,7 @@ export function decryptPairingSecretHex(stored: string, keyBytes: Uint8Array): s
   const key = normalizeAesKey(keyBytes);
   const decipher = createDecipheriv("aes-256-gcm", key, iv);
   decipher.setAuthTag(tag);
+  decipher.setAAD(pairingSecretAad(channelId));
   try {
     return Buffer.concat([decipher.update(ct), decipher.final()]).toString("utf8");
   } catch {

@@ -41,7 +41,7 @@ export function createChannelAdmissionStore(
     upsertChannelAdmission(record: ChannelAdmissionRecord): void {
       upsertStmt.run(
         record.channelId,
-        encryptPairingSecretHex(record.pairingSecretHex, pairingSecretKey),
+        encryptPairingSecretHex(record.pairingSecretHex, record.channelId, pairingSecretKey),
         record.createdAtMs,
         record.expiresAtMs,
       );
@@ -58,7 +58,11 @@ export function createChannelAdmissionStore(
       if (row === undefined || row === null) return undefined;
       return {
         channelId,
-        pairingSecretHex: decryptPairingSecretHex(row.pairing_secret_hex, pairingSecretKey),
+        pairingSecretHex: decryptPairingSecretHex(
+          row.pairing_secret_hex,
+          channelId,
+          pairingSecretKey,
+        ),
         createdAtMs: row.created_at_ms,
         expiresAtMs: row.expires_at_ms,
       };
