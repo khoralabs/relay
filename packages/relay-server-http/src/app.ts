@@ -7,14 +7,21 @@ import type { ChannelRegistry } from "./registry";
 import type { RelayProfile } from "./relay-config";
 import { envRelayMaxChannels } from "./relay-env";
 import { type RelayHub, type RelayHubWsData, relayHubWebSocketHandlers } from "./relay-hub";
+import { createRelayIngressLimiter, MAX_RELAY_WS_FRAME_BYTES } from "./relay-ws-limits";
 
 export { DEFAULT_CHANNEL_TTL_MS } from "./relay-config";
+
+export type RelayWebSocketHandlers = ReturnType<typeof relayHubWebSocketHandlers>;
+
+export type RelayWebSocketConfig = RelayWebSocketHandlers & {
+  maxPayloadLength: number;
+};
 
 export type RelayApp = {
   hub: RelayHub;
   auth: RelayAuth;
   registry: ChannelRegistry;
-  websocket: ReturnType<typeof relayHubWebSocketHandlers>;
+  websocket: RelayWebSocketConfig;
   fetch(req: Request, server: Bun.Server<RelayHubWsData>): Promise<Response | undefined>;
 };
 
@@ -29,7 +36,8 @@ export type CreateRelayAppOptions = {
 };
 
 export function createRelayApp(opts: CreateRelayAppOptions): RelayApp {
-  const wsHandlers = relayHubWebSocketHandlers({ hub: opts.hub });
+  const ingressLimiter = createRelayIngressLimiter();
+  const wsHandlers = relayHubWebSocketHandlers({ hub: opts.hub, ingressLimiter });
   const auth = opts.auth ?? createRelayAuth({ now: opts.now });
   const rateLimiters = opts.rateLimiters ?? createRelayRateLimiters();
   const now = opts.now ?? (() => Date.now());
@@ -52,7 +60,10 @@ export function createRelayApp(opts: CreateRelayAppOptions): RelayApp {
     hub: opts.hub,
     auth,
     registry: opts.registry,
-    websocket: wsHandlers,
+    websocket: {
+      ...wsHandlers,
+      maxPayloadLength: MAX_RELAY_WS_FRAME_BYTES,
+    },
     fetch(req, server) {
       return routeRelayHttp(httpDeps, req, server);
     },

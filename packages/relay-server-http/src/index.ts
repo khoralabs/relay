@@ -60,3 +60,11 @@ export {
   type RelayPeer,
   relayHubWebSocketHandlers,
 } from "./relay-hub";
+export {
+  type ChannelIngressLimiter,
+  createChannelIngressLimiter,
+  createRelayIngressLimiter,
+  envWsIngressBytesPerMinutePerChannel,
+  envWsIngressFramesPerMinutePerChannel,
+  MAX_RELAY_WS_FRAME_BYTES,
+} from "./relay-ws-limits";

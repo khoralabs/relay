@@ -6,6 +6,8 @@ import {
 } from "@khoralabs/relay-admission";
 import type { ServerWebSocket } from "bun";
 import type { BlobSpool } from "./blob-spool";
+import type { ChannelIngressLimiter } from "./relay-ws-limits";
+import { MAX_RELAY_WS_FRAME_BYTES } from "./relay-ws-limits";
 
 export type RelayHubWsData = {
   channelId: string;
@@ -154,6 +156,9 @@ export function createRelayHub(opts: {
     },
 
     relayBytes(channelId: string, from: RelayPeer, bytes: Uint8Array): void {
+      if (bytes.byteLength > MAX_RELAY_WS_FRAME_BYTES) {
+        return;
+      }
       if (spoolEnabled.has(channelId)) {
         opts.spool.append(channelId, bytes, Date.now());
       }
@@ -182,7 +187,10 @@ export function createRelayHub(opts: {
   };
 }
 
-export function relayHubWebSocketHandlers(deps: { hub: RelayHub }): {
+export function relayHubWebSocketHandlers(deps: {
+  hub: RelayHub;
+  ingressLimiter?: ChannelIngressLimiter;
+}): {
   open(ws: ServerWebSocket<RelayHubWsData>): void;
   close(ws: ServerWebSocket<RelayHubWsData>): void;
   message(ws: ServerWebSocket<RelayHubWsData>, message: string | Buffer): void;
@@ -228,6 +236,18 @@ export function relayHubWebSocketHandlers(deps: { hub: RelayHub }): {
         bytes = new Uint8Array(message);
       } else {
         bytes = new Uint8Array(message.buffer, message.byteOffset, message.byteLength);
+      }
+      if (bytes.byteLength > MAX_RELAY_WS_FRAME_BYTES) {
+        ws.close(1009, "message too large");
+        return;
+      }
+      const ingressLimiter = deps.ingressLimiter;
+      if (
+        ingressLimiter !== undefined &&
+        !ingressLimiter.tryConsume(d.channelId, bytes.byteLength)
+      ) {
+        ws.close(1008, "ingress budget exceeded");
+        return;
       }
       deps.hub.relayBytes(d.channelId, peer, bytes);
     },
