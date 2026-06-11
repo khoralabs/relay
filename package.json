@@ -30,5 +30,6 @@
   },
   "dependencies": {
     "@types/parse-gitignore": "^1.0.2"
-  }
+  },
+  "module": "index.ts"
 }

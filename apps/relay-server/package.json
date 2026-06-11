@@ -1,9 +1,22 @@
 {
-  "name": "@khoralabs/relay-server",
-  "module": "index.ts",
+  "name": "@khoralabs/relay-server-app",
+  "version": "0.0.0",
+  "private": true,
   "type": "module",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@khoralabs/relay-server": "workspace:*"
+  },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@khoralabs/relay-client": "workspace:*",
+    "@khoralabs/relay-contracts": "workspace:*",
+    "@noble/ed25519": "^3.1.0",
+    "@types/bun": "latest",
+    "typescript": "^5"
   },
   "peerDependencies": {
     "typescript": "^5"
