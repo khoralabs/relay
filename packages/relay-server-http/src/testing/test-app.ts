@@ -53,6 +53,7 @@ export async function createTestRelayApp(opts?: {
     registry,
     hub,
     spool: stores.spool,
+    db,
     relayProfile,
   });
 

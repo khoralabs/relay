@@ -9,7 +9,7 @@ export async function handlePublishPreKeys(
   req: Request,
   url: URL,
 ): Promise<Response> {
-  const ipCheck = checkDefaultIpRateLimit(req, deps.rateLimiters);
+  const ipCheck = await checkDefaultIpRateLimit(req, deps.rateLimiters);
   if (ipCheck !== undefined) return ipCheck;
 
   const bodyText = await readBoundedBody(req);

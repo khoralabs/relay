@@ -16,7 +16,7 @@ export async function handleRegisterActor(
   url: URL,
   channelIdRaw: string,
 ): Promise<Response> {
-  const ipCheck = checkDefaultIpRateLimit(req, deps.rateLimiters);
+  const ipCheck = await checkDefaultIpRateLimit(req, deps.rateLimiters);
   if (ipCheck !== undefined) return ipCheck;
 
   const bodyText = await readBoundedBody(req);
@@ -50,7 +50,7 @@ export async function handleGetRoster(
   url: URL,
   channelIdRaw: string,
 ): Promise<Response> {
-  const ipCheck = checkDefaultIpRateLimit(req, deps.rateLimiters);
+  const ipCheck = await checkDefaultIpRateLimit(req, deps.rateLimiters);
   if (ipCheck !== undefined) return ipCheck;
 
   const authed = await requireAuthedDid(deps.auth, req, url, "");

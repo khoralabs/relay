@@ -9,11 +9,14 @@ import {
 } from "@khoralabs/relay-contracts";
 import { ed25519PublicKeyBytesFromDid } from "@khoralabs/relay-crypto";
 import { verifyAsync } from "@noble/ed25519";
+import { createInMemoryNonceStore } from "./in-memory-nonce-store";
+import type { NonceStore } from "./nonce-store";
 
 export { AGENT_REQUEST_HEADER };
 
 export const MAX_AGENT_REQUEST_BODY_BYTES = 65_536;
 export const MAX_CHANNEL_TTL_MS = 7 * 86_400_000;
+export const DEFAULT_NONCE_SWEEP_INTERVAL_MS = 60_000;
 
 export class AuthError extends Error {
   readonly status: number;
@@ -34,31 +37,25 @@ function ed25519PublicKeyFromDid(did: string): Uint8Array {
   }
 }
 
-type NonceEntry = { expiresAtMs: number };
-
-export function createInMemoryNonceStore() {
-  const seen = new Map<string, NonceEntry>();
-  return {
-    tryInsert(entry: { did: string; nonce: string; expiresAtMs: number }): boolean {
-      const key = `${entry.did}\0${entry.nonce}`;
-      if (seen.has(key)) return false;
-      seen.set(key, { expiresAtMs: entry.expiresAtMs });
-      return true;
-    },
-    sweepExpired(nowMs: number): void {
-      for (const [k, v] of seen) {
-        if (v.expiresAtMs <= nowMs) seen.delete(k);
-      }
-    },
-  };
-}
-
 export type RelayAuth = ReturnType<typeof createRelayAuth>;
 
-export function createRelayAuth(opts?: { now?: () => number; freshnessWindowMs?: number }) {
+export function createRelayAuth(opts?: {
+  now?: () => number;
+  freshnessWindowMs?: number;
+  nonceStore?: NonceStore;
+  sweepIntervalMs?: number;
+}) {
   const now = opts?.now ?? (() => Date.now());
   const freshnessWindowMs = opts?.freshnessWindowMs ?? AGENT_REQUEST_FRESHNESS_WINDOW_MS;
-  const nonceStore = createInMemoryNonceStore();
+  const nonceStore = opts?.nonceStore ?? createInMemoryNonceStore();
+  const sweepIntervalMs = opts?.sweepIntervalMs ?? DEFAULT_NONCE_SWEEP_INTERVAL_MS;
+  let lastSweepMs = 0;
+
+  async function maybeSweep(t: number): Promise<void> {
+    if (t - lastSweepMs < sweepIntervalMs) return;
+    lastSweepMs = t;
+    await nonceStore.sweepExpired(t);
+  }
 
   async function requireAuthenticatedRequest(
     req: Request,
@@ -96,11 +93,12 @@ export function createRelayAuth(opts?: { now?: () => number; freshnessWindowMs?:
     if (!ok) {
       throw new AuthError("agent request signature invalid", 401);
     }
-    nonceStore.sweepExpired(t);
-    const inserted = nonceStore.tryInsert({
+    await maybeSweep(t);
+    const inserted = await nonceStore.tryInsert({
       did: envelope.did,
       nonce: envelope.nonce,
       expiresAtMs: envelope.timestampMs + freshnessWindowMs,
+      nowMs: t,
     });
     if (!inserted) {
       throw new AuthError("agent request nonce reuse", 401);

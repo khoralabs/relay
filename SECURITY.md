@@ -44,3 +44,7 @@ Hub tickets are **reusable until channel expiry** unless admission policy enable
 ### DID-signed HTTP requests
 
 All mutating HTTP endpoints require a DID-signed request envelope. Hosts **must** verify the signing DID matches an authorized principal for the resource being accessed. The relay does not maintain a global trust registry — channel membership determines authorization.
+
+**Replay protection and rate limits** use the relay SQLite database by default (`agent_request_nonces`, `rate_limit_counters` on `RELAY_DB_PATH`). That survives process restart on a **single instance**.
+
+**Multiple instances behind a load balancer** must set `RELAY_REDIS_URL` so nonce replay protection and HTTP rate limits share state across pods. Without Redis, a captured signed request can be replayed against a different instance, and per-DID/IP limits reset per process. SQLite on separate DB files per pod does **not** coordinate across instances.

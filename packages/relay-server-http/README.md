@@ -16,7 +16,8 @@ Server library providing the HTTP + WebSocket relay implementation. Consumed by 
 | `loadRelayProfile` | Reads `RELAY_MODE` env to produce a `pool` or `single` profile |
 | `bootstrapSingleChannel` | Seeds a single channel on startup (single mode) |
 | `createRelayAuth` | DID-signed request verifier |
-| `createRateLimiter` / `createRelayRateLimiters` | Token-bucket rate limiting |
+| `createNonceStore` / `createSqliteNonceStore` | Pluggable agent-request nonce replay store (SQLite, Redis, in-memory) |
+| `createRateLimiter` / `createRelayRateLimiters` | HTTP rate limiting (SQLite, Redis, or in-memory backends) |
 | `createBlobSpool` | SQLite-backed blob replay store |
 
 ### Testing (`@khoralabs/relay-server-http/testing`)

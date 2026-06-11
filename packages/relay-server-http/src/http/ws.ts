@@ -14,7 +14,7 @@ export async function handleChannelWsUpgrade(
   channelIdRaw: string,
   server: Bun.Server<RelayHubWsData>,
 ): Promise<Response | undefined> {
-  const ipCheck = checkDefaultIpRateLimit(req, deps.rateLimiters);
+  const ipCheck = await checkDefaultIpRateLimit(req, deps.rateLimiters);
   if (ipCheck !== undefined) return ipCheck;
 
   const channelId = resolveChannelId(deps, channelIdRaw);

@@ -2,8 +2,8 @@ import { isRosterAtCapacity } from "../registry";
 import { jsonError } from "../responses";
 import type { RelayHttpDeps } from "./deps";
 import {
-  applyRateLimit,
   checkDefaultIpRateLimit,
+  checkRateLimitResponse,
   mintTicketForChannel,
   readBoundedBody,
   requireAuthedDid,
@@ -14,7 +14,7 @@ export async function handleChannelsInviteJoin(
   req: Request,
   url: URL,
 ): Promise<Response> {
-  const ipCheck = checkDefaultIpRateLimit(req, deps.rateLimiters);
+  const ipCheck = await checkDefaultIpRateLimit(req, deps.rateLimiters);
   if (ipCheck !== undefined) return ipCheck;
 
   const bodyRead = await readBoundedBody(req);
@@ -25,7 +25,7 @@ export async function handleChannelsInviteJoin(
   if (authed instanceof Response) return authed;
   const { did } = authed;
 
-  const didCheck = applyRateLimit(deps.rateLimiters.channelsJoinDid(did));
+  const didCheck = await checkRateLimitResponse(deps.rateLimiters.channelsJoinDid, did);
   if (didCheck !== undefined) return didCheck;
 
   let inviteToken: string;

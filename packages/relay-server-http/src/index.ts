@@ -8,8 +8,8 @@ export {
 export {
   AGENT_REQUEST_HEADER,
   AuthError,
-  createInMemoryNonceStore,
   createRelayAuth,
+  DEFAULT_NONCE_SWEEP_INTERVAL_MS,
   MAX_AGENT_REQUEST_BODY_BYTES,
   MAX_CHANNEL_TTL_MS,
   type RelayAuth,
@@ -24,6 +24,11 @@ export {
   createChannelAdmissionStoreFromEnv,
   ensureChannelAdmissionSchema,
 } from "./channel-admission";
+export { createNonceStore } from "./create-nonce-store";
+export {
+  createBackedRateLimiter,
+  createRelayRateLimiterFromEnv,
+} from "./create-rate-limiter";
 export {
   applyRelayDbPragmas,
   createRelayStores,
@@ -33,7 +38,16 @@ export {
   relayDatabasePath,
   sqlCipherKeyFromEnv,
 } from "./db";
-export { createRateLimiter } from "./rate-limit";
+export { createInMemoryNonceStore } from "./in-memory-nonce-store";
+export type { NonceStore } from "./nonce-store";
+export {
+  clientIpFromRequest,
+  createInMemoryRateLimiter,
+  createRateLimiter,
+  type RateLimitCheck,
+  type RateLimiter,
+  type RateLimitRule,
+} from "./rate-limit";
 export {
   createRelayRateLimiters,
   type RelayRateLimiters,
@@ -61,6 +75,13 @@ export {
   relayHubWebSocketHandlers,
 } from "./relay-hub";
 export {
+  createRelayRedisClient,
+  type RelayRedisClient,
+  relayRedisPrefixFromEnv,
+  relayRedisUrlFromEnv,
+} from "./relay-redis";
+export { ensureRelayStateSchema } from "./relay-state-schema";
+export {
   type ChannelIngressLimiter,
   createChannelIngressLimiter,
   createRelayIngressLimiter,
@@ -68,3 +89,4 @@ export {
   envWsIngressFramesPerMinutePerChannel,
   MAX_RELAY_WS_FRAME_BYTES,
 } from "./relay-ws-limits";
+export { createSqliteNonceStore } from "./sqlite-nonce-store";

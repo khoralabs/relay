@@ -3,8 +3,8 @@ import { jsonError } from "../responses";
 import { resolveChannelId } from "./channel-id";
 import type { RelayHttpDeps } from "./deps";
 import {
-  applyRateLimit,
   checkDefaultIpRateLimit,
+  checkRateLimitResponse,
   readBoundedBody,
   requireAuthedDid,
   requireMember,
@@ -16,7 +16,7 @@ export async function handleChannelMintJoinToken(
   url: URL,
   channelIdRaw: string,
 ): Promise<Response> {
-  const ipCheck = checkDefaultIpRateLimit(req, deps.rateLimiters);
+  const ipCheck = await checkDefaultIpRateLimit(req, deps.rateLimiters);
   if (ipCheck !== undefined) return ipCheck;
 
   const bodyRead = await readBoundedBody(req);
@@ -26,7 +26,7 @@ export async function handleChannelMintJoinToken(
   if (authed instanceof Response) return authed;
   const { did } = authed;
 
-  const didCheck = applyRateLimit(deps.rateLimiters.channelsTicketMintDid(did));
+  const didCheck = await checkRateLimitResponse(deps.rateLimiters.channelsTicketMintDid, did);
   if (didCheck !== undefined) return didCheck;
 
   const channelId = resolveChannelId(deps, channelIdRaw);

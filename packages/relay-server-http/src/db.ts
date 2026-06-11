@@ -5,6 +5,7 @@ import { openEncryptedDatabaseSync, SqliteCryptoError } from "@khoralabs/sqlite-
 import { createBlobSpool } from "./blob-spool";
 import { createChannelAdmissionStoreFromEnv } from "./channel-admission";
 import { ensureChannelRegistrySchema } from "./registry-schema";
+import { ensureRelayStateSchema } from "./relay-state-schema";
 
 export const RELAY_SQLCIPHER_ENV = "RELAY_SQLCIPHER_KEY";
 export const DEV_SQLCIPHER_KEY = "relay-dev-sqlcipher-key";
@@ -63,6 +64,7 @@ export function openRelayDatabase(path?: string, key?: string): Database {
   restrictRelayStoreDatabasePermissions(dbPath);
   applyRelayDbPragmas(db);
   ensureChannelRegistrySchema(db);
+  ensureRelayStateSchema(db);
   return db;
 }
 

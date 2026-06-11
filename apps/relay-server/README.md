@@ -32,6 +32,10 @@ Default port: **8790** (override with `PORT`).
 | `RELAY_DB_PATH` | SQLite path (`:memory:` supported) | `packages/data/relay.sqlite` |
 | `RELAY_SQLCIPHER_KEY` | Whole-file DB encryption key | — (required in prod) |
 | `RELAY_PAIRING_SECRET_ENCRYPTION_KEY` | Field-level pairing secret encryption | — |
+| `RELAY_REDIS_URL` | Redis URL for shared nonce/rate-limit state (required multi-instance) | — |
+| `RELAY_REDIS_PREFIX` | Key prefix for Redis state | `relay` |
+
+Single-instance deployments can rely on SQLite (`RELAY_DB_PATH`) for agent-request nonce replay protection and HTTP rate limits. Behind a load balancer, set `RELAY_REDIS_URL`.
 
 ## Tests
 

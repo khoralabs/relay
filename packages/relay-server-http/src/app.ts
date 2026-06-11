@@ -1,12 +1,20 @@
+import type { Database } from "bun:sqlite";
 import { createRelayAuth, type RelayAuth } from "./auth";
 import type { BlobSpool } from "./blob-spool";
+import { createNonceStore } from "./create-nonce-store";
 import type { RelayHttpDeps } from "./http/deps";
 import { routeRelayHttp } from "./http/router";
+import type { NonceStore } from "./nonce-store";
 import { createRelayRateLimiters, type RelayRateLimiters } from "./rate-limit-buckets";
 import type { ChannelRegistry } from "./registry";
 import type { RelayProfile } from "./relay-config";
 import { envRelayMaxChannels } from "./relay-env";
 import { type RelayHub, type RelayHubWsData, relayHubWebSocketHandlers } from "./relay-hub";
+import {
+  createRelayRedisClient,
+  relayRedisPrefixFromEnv,
+  relayRedisUrlFromEnv,
+} from "./relay-redis";
 import { createRelayIngressLimiter, MAX_RELAY_WS_FRAME_BYTES } from "./relay-ws-limits";
 
 export { DEFAULT_CHANNEL_TTL_MS } from "./relay-config";
@@ -29,17 +37,32 @@ export type CreateRelayAppOptions = {
   registry: ChannelRegistry;
   hub: RelayHub;
   spool: BlobSpool;
+  db?: Database;
   auth?: RelayAuth | undefined;
+  nonceStore?: NonceStore | undefined;
   rateLimiters?: RelayRateLimiters | undefined;
   relayProfile?: RelayProfile | undefined;
   now?: (() => number) | undefined;
+  env?: NodeJS.ProcessEnv;
 };
 
 export function createRelayApp(opts: CreateRelayAppOptions): RelayApp {
+  const env = opts.env ?? process.env;
+  const redisUrl = relayRedisUrlFromEnv(env);
+  const redisPrefix = relayRedisPrefixFromEnv(env);
+  const redis = redisUrl !== undefined ? createRelayRedisClient(redisUrl) : undefined;
+  const backing = { db: opts.db, redis, redisPrefix };
+
   const ingressLimiter = createRelayIngressLimiter();
   const wsHandlers = relayHubWebSocketHandlers({ hub: opts.hub, ingressLimiter });
-  const auth = opts.auth ?? createRelayAuth({ now: opts.now });
-  const rateLimiters = opts.rateLimiters ?? createRelayRateLimiters();
+  const nonceStore = opts.nonceStore ?? createNonceStore(backing);
+  const auth =
+    opts.auth ??
+    createRelayAuth({
+      now: opts.now,
+      nonceStore,
+    });
+  const rateLimiters = opts.rateLimiters ?? createRelayRateLimiters(env, backing);
   const now = opts.now ?? (() => Date.now());
 
   const relayProfile =

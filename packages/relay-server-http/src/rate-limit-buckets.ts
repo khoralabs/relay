@@ -1,6 +1,7 @@
-import { createRateLimiter, envRatePerMinute, type RateLimitCheck } from "./rate-limit";
-
-export type RateLimiter = (key: string) => RateLimitCheck;
+import type { Database } from "bun:sqlite";
+import { createRelayRateLimiterFromEnv } from "./create-rate-limiter";
+import type { RateLimitCheck, RateLimiter } from "./rate-limit";
+import type { RelayRedisClient } from "./relay-redis";
 
 export type RelayRateLimiters = {
   channelsCreateDid: RateLimiter;
@@ -10,20 +11,38 @@ export type RelayRateLimiters = {
   defaultIp: RateLimiter;
 };
 
-export function createRelayRateLimiters(env: NodeJS.ProcessEnv = process.env): RelayRateLimiters {
+export function createRelayRateLimiters(
+  env: NodeJS.ProcessEnv = process.env,
+  opts?: { db?: Database; redis?: RelayRedisClient; redisPrefix?: string },
+): RelayRateLimiters {
+  const backing = {
+    db: opts?.db,
+    redis: opts?.redis,
+    redisPrefix: opts?.redisPrefix,
+  };
   return {
-    channelsCreateDid: createRateLimiter(
-      envRatePerMinute(env.RELAY_RL_CHANNELS_CREATE_PER_MIN_PER_DID, 30),
+    channelsCreateDid: createRelayRateLimiterFromEnv(
+      env.RELAY_RL_CHANNELS_CREATE_PER_MIN_PER_DID,
+      30,
+      backing,
     ),
-    channelsJoinDid: createRateLimiter(
-      envRatePerMinute(env.RELAY_RL_CHANNELS_JOIN_PER_MIN_PER_DID, 30),
+    channelsJoinDid: createRelayRateLimiterFromEnv(
+      env.RELAY_RL_CHANNELS_JOIN_PER_MIN_PER_DID,
+      30,
+      backing,
     ),
-    channelsTicketMintDid: createRateLimiter(
-      envRatePerMinute(env.RELAY_RL_CHANNELS_TICKET_PER_MIN_PER_DID, 60),
+    channelsTicketMintDid: createRelayRateLimiterFromEnv(
+      env.RELAY_RL_CHANNELS_TICKET_PER_MIN_PER_DID,
+      60,
+      backing,
     ),
-    channelsAllocateDid: createRateLimiter(
-      envRatePerMinute(env.RELAY_RL_CHANNELS_ALLOCATE_PER_MIN_PER_DID, 60),
+    channelsAllocateDid: createRelayRateLimiterFromEnv(
+      env.RELAY_RL_CHANNELS_ALLOCATE_PER_MIN_PER_DID,
+      60,
+      backing,
     ),
-    defaultIp: createRateLimiter(envRatePerMinute(env.RELAY_RL_DEFAULT_PER_MIN_PER_IP, 900)),
+    defaultIp: createRelayRateLimiterFromEnv(env.RELAY_RL_DEFAULT_PER_MIN_PER_IP, 900, backing),
   };
 }
+
+export type { RateLimitCheck };

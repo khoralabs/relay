@@ -7,8 +7,8 @@ import { jsonError } from "../responses";
 import { resolveChannelId } from "./channel-id";
 import type { RelayHttpDeps } from "./deps";
 import {
-  applyRateLimit,
   checkDefaultIpRateLimit,
+  checkRateLimitResponse,
   readBoundedBody,
   requireAuthedDid,
   requireMember,
@@ -20,7 +20,7 @@ export async function handleSessionAllocate(
   url: URL,
   channelIdRaw: string,
 ): Promise<Response> {
-  const ipCheck = checkDefaultIpRateLimit(req, deps.rateLimiters);
+  const ipCheck = await checkDefaultIpRateLimit(req, deps.rateLimiters);
   if (ipCheck !== undefined) return ipCheck;
 
   const bodyRead = await readBoundedBody(req);
@@ -31,7 +31,7 @@ export async function handleSessionAllocate(
   if (authed instanceof Response) return authed;
   const { did } = authed;
 
-  const didCheck = applyRateLimit(deps.rateLimiters.channelsAllocateDid(did));
+  const didCheck = await checkRateLimitResponse(deps.rateLimiters.channelsAllocateDid, did);
   if (didCheck !== undefined) return didCheck;
 
   const channelId = resolveChannelId(deps, channelIdRaw);
@@ -76,7 +76,7 @@ export async function handleSessionStatus(
   channelIdRaw: string,
   sessionIdRaw: string,
 ): Promise<Response> {
-  const ipCheck = checkDefaultIpRateLimit(req, deps.rateLimiters);
+  const ipCheck = await checkDefaultIpRateLimit(req, deps.rateLimiters);
   if (ipCheck !== undefined) return ipCheck;
 
   const authed = await requireAuthedDid(deps.auth, req, url, "");
@@ -105,7 +105,7 @@ export async function handleSessionRelease(
   channelIdRaw: string,
   sessionIdRaw: string,
 ): Promise<Response> {
-  const ipCheck = checkDefaultIpRateLimit(req, deps.rateLimiters);
+  const ipCheck = await checkDefaultIpRateLimit(req, deps.rateLimiters);
   if (ipCheck !== undefined) return ipCheck;
 
   const authed = await requireAuthedDid(deps.auth, req, url, "");

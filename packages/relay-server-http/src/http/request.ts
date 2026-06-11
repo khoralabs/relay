@@ -2,7 +2,7 @@ import type { RelayChannelPolicy } from "@khoralabs/relay-contracts";
 
 import { MAX_AGENT_REQUEST_BODY_BYTES, type RelayAuth } from "../auth";
 import { RELAY_HTTP_HEADER } from "../http-headers";
-import { clientIpFromRequest, type RateLimitCheck } from "../rate-limit";
+import { clientIpFromRequest, type RateLimitCheck, type RateLimiter } from "../rate-limit";
 import type { RelayRateLimiters } from "../rate-limit-buckets";
 import { authErrorResponse, jsonError, rateLimitedResponse } from "../responses";
 import type { RelayHttpDeps } from "./deps";
@@ -43,11 +43,18 @@ export async function readBoundedBody(req: Request): Promise<string | Response> 
   return bodyText;
 }
 
-export function checkDefaultIpRateLimit(
+export async function checkRateLimitResponse(
+  limiter: RateLimiter,
+  key: string,
+): Promise<Response | undefined> {
+  return applyRateLimit(await limiter(key));
+}
+
+export async function checkDefaultIpRateLimit(
   req: Request,
   rateLimiters: RelayRateLimiters,
-): Response | undefined {
-  return applyRateLimit(rateLimiters.defaultIp(clientIpFromRequest(req)));
+): Promise<Response | undefined> {
+  return checkRateLimitResponse(rateLimiters.defaultIp, clientIpFromRequest(req));
 }
 
 export async function requireAuthedDid(
