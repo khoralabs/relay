@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import {
-  createRateLimiter,
+  createInMemoryRateLimiter,
   createRelayApp,
   createRelayRateLimiters,
 } from "@khoralabs/relay-server-http";
@@ -12,7 +12,7 @@ import {
 } from "@khoralabs/relay-server-http/testing";
 
 test("rate limiter returns 429", async () => {
-  const limiter = createRateLimiter({ windowMs: 60_000, max: 1 });
+  const limiter = createInMemoryRateLimiter({ windowMs: 60_000, max: 1 });
   const first = await limiter("k");
   const second = await limiter("k");
   expect(first.ok).toBe(true);
@@ -29,7 +29,7 @@ test("channels create rate limit → 429", async () => {
     auth: app.auth,
     rateLimiters: {
       ...createRelayRateLimiters(),
-      channelsCreateDid: createRateLimiter({ windowMs: 60_000, max: 1 }),
+      channelsCreateDid: createInMemoryRateLimiter({ windowMs: 60_000, max: 1 }),
     },
   });
   const server = Bun.serve({

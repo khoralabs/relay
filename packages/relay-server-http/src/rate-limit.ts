@@ -58,11 +58,6 @@ export function createInMemoryRateLimiter(rule: RateLimitRule | null): RateLimit
   };
 }
 
-/** @deprecated Use createInMemoryRateLimiter or backend-specific factories. */
-export function createRateLimiter(rule: RateLimitRule | null): RateLimiter {
-  return createInMemoryRateLimiter(rule);
-}
-
 export function clientIpFromRequest(req: Request): string {
   const realIp = req.headers.get(RELAY_HTTP_HEADER.xRealIp)?.trim();
   if (realIp !== undefined && realIp.length > 0) return realIp;

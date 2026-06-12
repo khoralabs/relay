@@ -43,7 +43,6 @@ export type { NonceStore } from "./nonce-store";
 export {
   clientIpFromRequest,
   createInMemoryRateLimiter,
-  createRateLimiter,
   type RateLimitCheck,
   type RateLimiter,
   type RateLimitRule,
