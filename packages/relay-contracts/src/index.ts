@@ -4,4 +4,7 @@ export * from "./channels";
 export * from "./key-packages";
 export * from "./mls-welcome";
 export * from "./relay-crypto-profile";
+export * from "./relay-hlc";
+export * from "./relay-timing";
+export * from "./relay-timing-layer";
 export * from "./roster";

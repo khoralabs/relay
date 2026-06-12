@@ -15,3 +15,9 @@ export * from "./channels";
 export { connectRelay, type RelayConnectOptions, type RelayPeerConnection } from "./connection";
 export type { RelayIdentityProvider } from "./identity-provider";
 export { RelayClient, type RelayClientOptions } from "./relay-channel-client";
+export {
+  connectTimedRelay,
+  type TimedRelayChannel,
+  type TimedRelayConnectOptions,
+  wrapTimedRelayPeer,
+} from "./timing";

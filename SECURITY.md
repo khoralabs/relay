@@ -63,7 +63,7 @@ All mutating HTTP endpoints require a DID-signed request envelope. Hosts **must*
 
 **MLS Welcome store** (`POST/GET .../sessions/:id/mls-welcome`) holds opaque Welcome blobs for bilateral session bootstrap. Only the session initiator may publish; session parties may fetch.
 
-**Two client APIs (no in-band negotiation):** `MlsChannelConnection` always MLS (`mls1` envelopes); `connectRelay` always plaintext. Callers pick the API for their trust context.
+**Two integration profiles (no in-band negotiation):** `MlsChannelConnection` uses RFC 9420 MLS inside `khora.obp.frame.mls#MlsHubEnvelope` (`mls1`); `connectRelay` uses plaintext bytes. Callers pick the profile for their trust context. Peer timing uses `RelayTimingFrame` (`rt1`) with HLC inside MLS payloads; the hub forwards opaque blobs.
 
 **MLS group state at rest:** Persisted MLS group bytes (`encodeGroupState`) contain ratchet secrets. Use `createEncryptingMlsStatePersistence` or `createFileMlsStatePersistence` with `RELAY_MLS_GROUP_STATE_ENCRYPTION_KEY` (32-byte hex or base64url in production). Plain `MemoryMlsStatePersistence` is for tests only.
 

@@ -155,7 +155,7 @@ export function createRelayHub(opts: {
       }
     },
 
-    relayBytes(channelId: string, from: RelayPeer, bytes: Uint8Array): void {
+    relayBytes(channelId: string, _from: RelayPeer, bytes: Uint8Array): void {
       if (bytes.byteLength > MAX_RELAY_WS_FRAME_BYTES) {
         return;
       }
@@ -167,9 +167,7 @@ export function createRelayHub(opts: {
         return;
       }
       for (const peer of set) {
-        if (peer !== from) {
-          peer.send(bytes);
-        }
+        peer.send(bytes);
       }
     },
 

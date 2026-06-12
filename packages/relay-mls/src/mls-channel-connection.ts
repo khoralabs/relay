@@ -1,4 +1,5 @@
-import type { RelaySigner } from "@khoralabs/relay-contracts";
+import type { RelaySigner, RelayTimingContext } from "@khoralabs/relay-contracts";
+import { decodeRelayTimingFrame, withTiming } from "@khoralabs/relay-contracts";
 import { base64UrlToBytes } from "@khoralabs/relay-crypto";
 import { connectRelay, type RelayConnectOptions, type RelayPeerConnection } from "./connect-relay";
 import type { KeyPackageManager } from "./key-package-manager";
@@ -38,11 +39,23 @@ export class MlsChannelConnection {
   private readonly inbound: InboundSlot = { q: [], w: [] };
   private readonly rekeyTimers = new Map<string, ReturnType<typeof setInterval>>();
   private peer: RelayPeerConnection | undefined;
+  private timingLayer: ReturnType<typeof withTiming> | undefined;
 
   constructor(private readonly opts: MlsChannelConnectionOptions) {}
 
   static connect(connectOpts: MlsChannelConnectOptions): MlsChannelConnection {
     const conn = new MlsChannelConnection(connectOpts.mls);
+    const timingLayer = withTiming({
+      nodeId: connectOpts.mls.myDid,
+      innerSend: (frame) => {
+        void conn.mlsSendTimingFrame(frame);
+      },
+      onBody: (body) => {
+        conn.wireRouter.extractSessionId(body);
+        conn.pushInbound(body);
+      },
+    });
+    conn.timingLayer = timingLayer;
     conn.peer = connectRelay({
       ...connectOpts,
       onBlob: (blob) => conn.handleBlob(blob),
@@ -52,6 +65,13 @@ export class MlsChannelConnection {
 
   get closed(): boolean {
     return this.peer?.closed ?? true;
+  }
+
+  getTimingContext(): RelayTimingContext {
+    if (this.timingLayer === undefined) {
+      throw new Error("MlsChannelConnection timing layer not initialized");
+    }
+    return this.timingLayer.timingContext;
   }
 
   close(): void {
@@ -119,13 +139,22 @@ export class MlsChannelConnection {
     this.peer?.send(envelope);
   }
 
-  /** Send multiplex wire bytes wrapped in MLS for the inferred session. */
+  /** Send multiplex wire bytes wrapped in timing frame + MLS for the inferred session. */
   async sendMultiplexWire(wireBytes: Uint8Array): Promise<void> {
-    const sessionId = this.wireRouter.extractSessionId(wireBytes);
-    if (sessionId === undefined) {
-      throw new Error("cannot infer session_id from multiplex wire bytes");
+    if (this.timingLayer === undefined) {
+      throw new Error("MlsChannelConnection timing layer not initialized");
     }
-    await this.send(sessionId, wireBytes);
+    this.timingLayer.send(wireBytes);
+  }
+
+  private async mlsSendTimingFrame(timingFrame: Uint8Array): Promise<void> {
+    const decoded = decodeRelayTimingFrame(timingFrame);
+    const body = decoded?.body ?? timingFrame;
+    const sessionId = this.wireRouter.extractSessionId(body);
+    if (sessionId === undefined) {
+      throw new Error("cannot infer session_id from timing frame body");
+    }
+    await this.send(sessionId, timingFrame);
   }
 
   /** OBP-compatible duplex: MLS encrypts outbound multiplex wire; decrypts inbound to cleartext multiplex. */
@@ -196,8 +225,12 @@ export class MlsChannelConnection {
     if (plaintext === undefined) {
       return;
     }
-    this.wireRouter.extractSessionId(plaintext);
-    this.pushInbound(plaintext);
+    if (this.timingLayer !== undefined) {
+      this.timingLayer.handleFrame(plaintext);
+    } else {
+      this.wireRouter.extractSessionId(plaintext);
+      this.pushInbound(plaintext);
+    }
     this.opts.onGroupMessage?.(envelope.groupId, plaintext);
   }
 
