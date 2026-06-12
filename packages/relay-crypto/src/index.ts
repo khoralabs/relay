@@ -18,8 +18,12 @@ export {
 } from "./pairing-secret-cipher";
 export {
   PAIRING_SECRET_ENCRYPTION_KEY_ENV,
+  PAIRING_SECRET_KDF_INFO,
+  PAIRING_SECRET_KDF_SALT,
+  pairingSecretKeyFromBase64Url,
   pairingSecretKeyFromEnv,
   pairingSecretKeyFromHex,
+  pairingSecretKeyFromPassphrase,
   pairingSecretKeyFromUtf8,
   TEST_PAIRING_SECRET_KEY_HEX,
 } from "./pairing-secret-key";

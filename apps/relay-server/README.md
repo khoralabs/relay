@@ -31,7 +31,7 @@ Default port: **8790** (override with `PORT`).
 | `RELAY_MAX_CHANNELS` | Pool mode channel cap | `10000` |
 | `RELAY_DB_PATH` | SQLite path (`:memory:` supported) | `packages/data/relay.sqlite` |
 | `RELAY_SQLCIPHER_KEY` | Whole-file DB encryption key | — (required in prod) |
-| `RELAY_PAIRING_SECRET_ENCRYPTION_KEY` | Field-level pairing secret encryption | — |
+| `RELAY_PAIRING_SECRET_ENCRYPTION_KEY` | Field-level pairing secret encryption (32-byte hex or base64url in prod) | — |
 | `RELAY_REDIS_URL` | Redis URL for shared nonce/rate-limit state (required multi-instance) | — |
 | `RELAY_REDIS_PREFIX` | Key prefix for Redis state | `relay` |
 

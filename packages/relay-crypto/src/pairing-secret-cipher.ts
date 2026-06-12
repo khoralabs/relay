@@ -19,13 +19,10 @@ export class RelayCryptoError extends Error {
 }
 
 function normalizeAesKey(keyBytes: Uint8Array): Buffer {
-  if (keyBytes.length === 32) {
-    return Buffer.from(keyBytes);
+  if (keyBytes.length !== 32) {
+    throw new RelayCryptoError("pairing secret encryption key must be exactly 32 bytes");
   }
-  if (keyBytes.length > 32) {
-    return Buffer.from(keyBytes.subarray(0, 32));
-  }
-  throw new RelayCryptoError("pairing secret encryption key must be at least 32 bytes");
+  return Buffer.from(keyBytes);
 }
 
 export function isEncryptedPairingSecret(stored: string): boolean {

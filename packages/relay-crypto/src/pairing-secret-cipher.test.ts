@@ -27,6 +27,9 @@ describe("pairing-secret-cipher", () => {
     expect(() => encryptPairingSecretHex(secretHex, channelId, new Uint8Array(16))).toThrow(
       RelayCryptoError,
     );
+    expect(() => encryptPairingSecretHex(secretHex, channelId, new Uint8Array(48))).toThrow(
+      RelayCryptoError,
+    );
   });
 
   test("reject decrypt with wrong key", () => {
