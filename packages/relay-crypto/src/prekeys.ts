@@ -14,6 +14,10 @@ export type PreKeyBundle = {
   identityKey: string;
   signedPreKey: SignedPreKey;
   oneTimePreKey?: OneTimePreKey;
+  /** Unclaimed one-time prekeys remaining for this DID after a fetch (relay metadata). */
+  remainingOneTimePreKeys?: number;
+  /** True when the fetch could not claim an OTK (SPK-only X3DH path). */
+  oneTimePreKeyDepleted?: boolean;
 };
 
 export type X3dhInitMessage = {
@@ -25,6 +29,17 @@ export type PublishPreKeyBundleBody = {
   identityKey: string;
   signedPreKey: SignedPreKey;
   oneTimePreKeys: OneTimePreKey[];
+};
+
+export type AppendOneTimePreKeysBody = {
+  oneTimePreKeys: OneTimePreKey[];
+};
+
+export type PreKeyBundleStatus = {
+  published: boolean;
+  remainingOneTimePreKeys: number;
+  signedPreKeyId?: number;
+  nextOneTimePreKeyId: number;
 };
 
 function obj(v: unknown, name: string): Record<string, unknown> {
@@ -75,7 +90,35 @@ export function parsePreKeyBundle(v: unknown): PreKeyBundle {
   if (o.oneTimePreKey !== undefined && o.oneTimePreKey !== null) {
     bundle.oneTimePreKey = parseOneTimePreKey(o.oneTimePreKey);
   }
+  if (o.remainingOneTimePreKeys !== undefined && o.remainingOneTimePreKeys !== null) {
+    bundle.remainingOneTimePreKeys = posInt(o.remainingOneTimePreKeys, "remainingOneTimePreKeys");
+  }
+  if (o.oneTimePreKeyDepleted === true) {
+    bundle.oneTimePreKeyDepleted = true;
+  }
   return bundle;
+}
+
+export function parseAppendOneTimePreKeysBody(v: unknown): AppendOneTimePreKeysBody {
+  const o = obj(v, "AppendOneTimePreKeysBody");
+  const otks = o.oneTimePreKeys;
+  if (!Array.isArray(otks)) {
+    throw new Error("oneTimePreKeys: expected array");
+  }
+  return { oneTimePreKeys: otks.map(parseOneTimePreKey) };
+}
+
+export function parsePreKeyBundleStatus(v: unknown): PreKeyBundleStatus {
+  const o = obj(v, "PreKeyBundleStatus");
+  const status: PreKeyBundleStatus = {
+    published: o.published === true,
+    remainingOneTimePreKeys: posInt(o.remainingOneTimePreKeys, "remainingOneTimePreKeys"),
+    nextOneTimePreKeyId: posInt(o.nextOneTimePreKeyId, "nextOneTimePreKeyId"),
+  };
+  if (o.signedPreKeyId !== undefined && o.signedPreKeyId !== null) {
+    status.signedPreKeyId = posInt(o.signedPreKeyId, "signedPreKeyId");
+  }
+  return status;
 }
 
 export function parsePublishPreKeyBundleBody(v: unknown): PublishPreKeyBundleBody {

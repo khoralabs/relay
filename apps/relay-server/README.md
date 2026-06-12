@@ -35,6 +35,8 @@ Default port: **8790** (override with `PORT`).
 | `RELAY_REDIS_URL` | Redis URL for shared nonce/rate-limit state (required multi-instance) | — |
 | `RELAY_REDIS_PREFIX` | Key prefix for Redis state | `relay` |
 | `RELAY_TRUSTED_PROXY` | Honor `X-Forwarded-For` / `X-Real-IP` for IP rate limits (behind LB) | unset (use socket peer only) |
+| `RELAY_RL_PREKEYS_FETCH_PER_MIN_PER_DID` | Per-requester DID rate limit for prekey fetch | `30` |
+| `RELAY_PREKEY_LOW_OTK_WARN` | Log warning when remaining OTK count is at or below this | `5` |
 
 Single-instance deployments can rely on SQLite (`RELAY_DB_PATH`) for agent-request nonce replay protection and HTTP rate limits. Behind a load balancer, set `RELAY_REDIS_URL`.
 

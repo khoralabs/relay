@@ -49,4 +49,6 @@ All mutating HTTP endpoints require a DID-signed request envelope. Hosts **must*
 
 **Multiple instances behind a load balancer** must set `RELAY_REDIS_URL` so nonce replay protection and HTTP rate limits share state across pods. Without Redis, a captured signed request can be replayed against a different instance, and per-DID/IP limits reset per process. SQLite on separate DB files per pod does **not** coordinate across instances.
 
+**Prekey fetch** (`GET /v1/prekeys/:did`) requires DID-signed auth and per-requester rate limits. Each successful fetch claims one one-time prekey; responses include `remainingOneTimePreKeys` and `oneTimePreKeyDepleted` when the SPK-only X3DH path applies. The relay cannot mint keys — hosts should run `@khoralabs/relay-client` `PreKeyManager` (or equivalent) to poll `GET /v1/prekeys/status` and append OTKs via `POST /v1/prekeys/otks` before the pool is exhausted.
+
 IP-based rate limits use the socket peer address by default. Set `RELAY_TRUSTED_PROXY=1` only when the relay sits behind a trusted reverse proxy or load balancer that strips client-supplied forwarding headers and appends the real client IP. Without this flag, `X-Forwarded-For` and `X-Real-IP` are ignored so clients cannot spoof their IP to evade limits.

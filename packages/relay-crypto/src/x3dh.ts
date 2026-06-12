@@ -1,4 +1,5 @@
 import { ed25519, x25519 } from "@noble/curves/ed25519.js";
+import { getPublicKeyAsync } from "@noble/ed25519";
 
 import { bytesToHex, hexToBytes } from "./encoding";
 import type { PreKeyBundle, SignedPreKey, X3dhInitMessage } from "./prekeys";
@@ -37,6 +38,10 @@ async function deriveSk(dhInputs: Uint8Array[]): Promise<Uint8Array> {
     ) as ArrayBuffer,
   );
   return new Uint8Array(hash);
+}
+
+export async function identityPublicKeyHexFromPriv(identityPriv: Uint8Array): Promise<string> {
+  return bytesToHex(await getPublicKeyAsync(identityPriv));
 }
 
 /** Generate a signed prekey (X25519 keypair; SPK.sig = Ed25519Sign(identityPriv, spkPub)). */

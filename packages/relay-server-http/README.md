@@ -41,6 +41,8 @@ Helpers for spinning up in-process relay instances in tests (`test-app.ts`, `tes
 | POST | `/v1/channels/:id/actor` | Register actor |
 | GET | `/v1/channels/:id/roster` | Get roster |
 | POST | `/v1/prekeys` | Publish prekey bundle |
-| GET | `/v1/prekeys/:did` | Fetch prekey bundle |
+| GET | `/v1/prekeys/status` | Own bundle status (remaining OTKs; no claim) |
+| POST | `/v1/prekeys/otks` | Append one-time prekeys to existing bundle |
+| GET | `/v1/prekeys/:did` | Fetch prekey bundle (claims one OTK; DID-signed) |
 
-All mutating endpoints require a DID-signed `Agent-Request` header.
+All endpoints except `/health` require a DID-signed `Agent-Request` header.

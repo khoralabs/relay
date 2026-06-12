@@ -8,6 +8,7 @@ export type RelayRateLimiters = {
   channelsJoinDid: RateLimiter;
   channelsTicketMintDid: RateLimiter;
   channelsAllocateDid: RateLimiter;
+  prekeysFetchDid: RateLimiter;
   defaultIp: RateLimiter;
 };
 
@@ -39,6 +40,11 @@ export function createRelayRateLimiters(
     channelsAllocateDid: createRelayRateLimiterFromEnv(
       env.RELAY_RL_CHANNELS_ALLOCATE_PER_MIN_PER_DID,
       60,
+      backing,
+    ),
+    prekeysFetchDid: createRelayRateLimiterFromEnv(
+      env.RELAY_RL_PREKEYS_FETCH_PER_MIN_PER_DID,
+      30,
       backing,
     ),
     defaultIp: createRelayRateLimiterFromEnv(env.RELAY_RL_DEFAULT_PER_MIN_PER_IP, 900, backing),

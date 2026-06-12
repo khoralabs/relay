@@ -17,7 +17,12 @@ import {
   prekeyDidPathRe,
   prekeysPathRe,
 } from "./paths";
-import { handleFetchPreKeys, handlePublishPreKeys } from "./prekeys";
+import {
+  handleAppendOneTimePreKeys,
+  handleFetchPreKeys,
+  handlePreKeyStatus,
+  handlePublishPreKeys,
+} from "./prekeys";
 import { handleGetRoster, handleRegisterActor } from "./roster";
 import { handleSessionAllocate, handleSessionRelease, handleSessionStatus } from "./sessions";
 import { handleChannelMintTicket } from "./ticket";
@@ -100,13 +105,27 @@ export async function routeRelayHttp(
     return handleGetRoster(deps, req, url, rosterMatch[1] as string, server);
   }
 
+  if (req.method === "GET" && url.pathname === "/v1/prekeys/status") {
+    return handlePreKeyStatus(deps, req, url, server);
+  }
+
+  if (req.method === "POST" && url.pathname === "/v1/prekeys/otks") {
+    return handleAppendOneTimePreKeys(deps, req, url, server);
+  }
+
   if (req.method === "POST" && prekeysPathRe.test(url.pathname)) {
     return handlePublishPreKeys(deps, req, url, server);
   }
 
   const prekeyDidMatch = prekeyDidPathRe.exec(url.pathname);
   if (req.method === "GET" && prekeyDidMatch !== null) {
-    return handleFetchPreKeys(deps, req, decodeURIComponent(prekeyDidMatch[1] as string));
+    return handleFetchPreKeys(
+      deps,
+      req,
+      url,
+      decodeURIComponent(prekeyDidMatch[1] as string),
+      server,
+    );
   }
 
   const wsMatch = channelWsPathRe.exec(url.pathname);

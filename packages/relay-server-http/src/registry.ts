@@ -11,8 +11,21 @@ import {
   type RelaySessionQuota,
   type RosterSnapshot,
 } from "@khoralabs/relay-contracts";
-import type { PreKeyBundle, PublishPreKeyBundleBody } from "@khoralabs/relay-crypto";
+import type { OneTimePreKey, PreKeyBundle, PublishPreKeyBundleBody } from "@khoralabs/relay-crypto";
 import { hashInviteToken } from "./invites";
+
+export type PreKeyFetchResult = {
+  bundle: PreKeyBundle;
+  remainingOneTimePreKeys: number;
+  oneTimePreKeyClaimed: boolean;
+};
+
+export type PreKeyBundleStatus = {
+  published: boolean;
+  remainingOneTimePreKeys: number;
+  signedPreKeyId?: number;
+  nextOneTimePreKeyId: number;
+};
 
 export type ChannelRow = {
   channelId: string;
@@ -456,7 +469,71 @@ export function createChannelRegistry(db: Database) {
       }
     },
 
-    fetchPreKeyBundle(did: string): PreKeyBundle | undefined {
+    getPreKeyBundleStatus(did: string): PreKeyBundleStatus {
+      const row = db
+        .query<{ spk_id: number }, [string]>(
+          `SELECT spk_id FROM prekey_bundles WHERE principal_did = ?`,
+        )
+        .get(did);
+
+      const remainingOneTimePreKeys =
+        db
+          .query<{ n: number }, [string]>(
+            `SELECT COUNT(*) AS n FROM prekey_otks WHERE principal_did = ? AND claimed = 0`,
+          )
+          .get(did)?.n ?? 0;
+
+      const maxOtkId =
+        db
+          .query<{ max_id: number | null }, [string]>(
+            `SELECT MAX(otk_id) AS max_id FROM prekey_otks WHERE principal_did = ?`,
+          )
+          .get(did)?.max_id ?? null;
+
+      return {
+        published: row !== undefined && row !== null,
+        remainingOneTimePreKeys,
+        ...(row !== undefined && row !== null ? { signedPreKeyId: row.spk_id } : {}),
+        nextOneTimePreKeyId: (maxOtkId ?? 0) + 1,
+      };
+    },
+
+    appendOneTimePreKeys(did: string, oneTimePreKeys: OneTimePreKey[]): number {
+      const bundle = db.query(`SELECT 1 FROM prekey_bundles WHERE principal_did = ?`).get(did);
+      if (bundle === undefined || bundle === null) {
+        throw new Error("prekey bundle not published");
+      }
+      if (oneTimePreKeys.length === 0) {
+        return this.getPreKeyBundleStatus(did).remainingOneTimePreKeys;
+      }
+
+      const status = this.getPreKeyBundleStatus(did);
+      let expectedId = status.nextOneTimePreKeyId;
+      for (const otk of oneTimePreKeys) {
+        if (otk.keyId !== expectedId) {
+          throw new Error(`oneTimePreKeys: expected keyId ${expectedId}, got ${otk.keyId}`);
+        }
+        expectedId += 1;
+      }
+
+      db.run("BEGIN");
+      try {
+        const insertOtk = db.prepare(
+          `INSERT INTO prekey_otks (principal_did, otk_id, otk_pub, claimed) VALUES (?, ?, ?, 0)`,
+        );
+        for (const otk of oneTimePreKeys) {
+          insertOtk.run(did, otk.keyId, otk.publicKey);
+        }
+        db.run("COMMIT");
+      } catch (e) {
+        db.run("ROLLBACK");
+        throw e;
+      }
+
+      return status.remainingOneTimePreKeys + oneTimePreKeys.length;
+    },
+
+    fetchPreKeyBundle(did: string): PreKeyFetchResult | undefined {
       const row = db
         .query<
           {
@@ -472,30 +549,50 @@ export function createChannelRegistry(db: Database) {
         .get(did);
       if (row === undefined || row === null) return undefined;
 
-      const otk = db
-        .query<{ id: number; otk_id: number; otk_pub: string }, [string]>(
-          `SELECT id, otk_id, otk_pub FROM prekey_otks
-           WHERE principal_did = ? AND claimed = 0
-           ORDER BY id ASC LIMIT 1`,
-        )
-        .get(did);
+      db.run("BEGIN IMMEDIATE");
+      try {
+        const remainingBefore =
+          db
+            .query<{ n: number }, [string]>(
+              `SELECT COUNT(*) AS n FROM prekey_otks WHERE principal_did = ? AND claimed = 0`,
+            )
+            .get(did)?.n ?? 0;
 
-      const bundle: PreKeyBundle = {
-        did,
-        identityKey: row.identity_key,
-        signedPreKey: {
-          keyId: row.spk_id,
-          publicKey: row.spk_pub,
-          signature: row.spk_sig,
-        },
-      };
+        const otk = db
+          .query<{ id: number; otk_id: number; otk_pub: string }, [string]>(
+            `SELECT id, otk_id, otk_pub FROM prekey_otks
+             WHERE principal_did = ? AND claimed = 0
+             ORDER BY id ASC LIMIT 1`,
+          )
+          .get(did);
 
-      if (otk !== undefined && otk !== null) {
-        db.run(`UPDATE prekey_otks SET claimed = 1 WHERE id = ?`, [otk.id]);
-        bundle.oneTimePreKey = { keyId: otk.otk_id, publicKey: otk.otk_pub };
+        const bundle: PreKeyBundle = {
+          did,
+          identityKey: row.identity_key,
+          signedPreKey: {
+            keyId: row.spk_id,
+            publicKey: row.spk_pub,
+            signature: row.spk_sig,
+          },
+        };
+
+        let oneTimePreKeyClaimed = false;
+        if (otk !== undefined && otk !== null) {
+          db.run(`UPDATE prekey_otks SET claimed = 1 WHERE id = ?`, [otk.id]);
+          bundle.oneTimePreKey = { keyId: otk.otk_id, publicKey: otk.otk_pub };
+          oneTimePreKeyClaimed = true;
+        }
+
+        const remainingOneTimePreKeys = oneTimePreKeyClaimed
+          ? remainingBefore - 1
+          : remainingBefore;
+
+        db.run("COMMIT");
+        return { bundle, remainingOneTimePreKeys, oneTimePreKeyClaimed };
+      } catch (e) {
+        db.run("ROLLBACK");
+        throw e;
       }
-
-      return bundle;
     },
   };
 }

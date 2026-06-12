@@ -28,14 +28,18 @@ export {
   TEST_PAIRING_SECRET_KEY_HEX,
 } from "./pairing-secret-key";
 export type {
+  AppendOneTimePreKeysBody,
   OneTimePreKey,
   PreKeyBundle,
+  PreKeyBundleStatus,
   PublishPreKeyBundleBody,
   SignedPreKey,
   X3dhInitMessage,
 } from "./prekeys";
 export {
+  parseAppendOneTimePreKeysBody,
   parsePreKeyBundle,
+  parsePreKeyBundleStatus,
   parsePublishPreKeyBundleBody,
   parseX3dhInitMessage,
 } from "./prekeys";
@@ -45,5 +49,6 @@ export {
   deriveX3dhResponder,
   generateOneTimePreKeys,
   generateSignedPreKey,
+  identityPublicKeyHexFromPriv,
   verifySignedPreKey,
 } from "./x3dh";
