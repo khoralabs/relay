@@ -1,5 +1,9 @@
-import type { RelaySigner, RelayTimingContext } from "@khoralabs/relay-contracts";
-import { decodeRelayTimingFrame, withTiming } from "@khoralabs/relay-contracts";
+import {
+  decodeRelayTimingFrame,
+  type RelaySigner,
+  type RelayTimingContext,
+  withTiming,
+} from "@khoralabs/relay-contracts";
 import { base64UrlToBytes } from "@khoralabs/relay-crypto";
 import { connectRelay, type RelayConnectOptions, type RelayPeerConnection } from "./connect-relay";
 import type { KeyPackageManager } from "./key-package-manager";
@@ -8,7 +12,12 @@ import { MlsGroupSession } from "./mls-group-session";
 import { fetchMlsWelcomeHttp, publishMlsWelcomeHttp } from "./mls-welcome-http";
 import { MultiplexWireSessionRouter } from "./multiplex-wire-session";
 import type { MlsStatePersistenceAdapter } from "./persistence";
-import { decodeRelayMlsEnvelope, encodeRelayMlsEnvelope } from "./relay-mls-envelope";
+import {
+  type DecodedRelayMlsEnvelope,
+  decodeRelayMlsEnvelope,
+  encodeRelayMlsEnvelope,
+  generateRouteHandle,
+} from "./relay-mls-envelope";
 
 const DEFAULT_REKEY_INTERVAL_MS = 30 * 60 * 1000;
 
@@ -35,6 +44,8 @@ type InboundSlot = { q: Uint8Array[]; w: Array<() => void> };
 
 export class MlsChannelConnection {
   private readonly groups = new Map<string, MlsGroupSession>();
+  private readonly routeByGroup = new Map<string, string>();
+  private readonly groupByRoute = new Map<string, string>();
   private readonly wireRouter = new MultiplexWireSessionRouter();
   private readonly inbound: InboundSlot = { q: [], w: [] };
   private readonly rekeyTimers = new Map<string, ReturnType<typeof setInterval>>();
@@ -87,25 +98,28 @@ export class MlsChannelConnection {
     const fetched = await fetchKeyPackageHttp(this.opts.relayBaseUrl, this.opts.signer, peerDid);
     const session = this.groupSession(groupId);
     const peerBytes = base64UrlToBytes(fetched.keyPackage);
+    const route = generateRouteHandle();
+    await this.registerRoute(groupId, route);
     const { welcomeBase64Url } = await session.createWithPeer(peerBytes, peerDid);
     await publishMlsWelcomeHttp(
       this.opts.relayBaseUrl,
       this.opts.signer,
       this.opts.channelId,
       groupId,
-      { welcome: welcomeBase64Url },
+      { welcome: welcomeBase64Url, route },
     );
     this.scheduleRekey(groupId);
   }
 
   /** Responder: fetch welcome and join MLS group. */
   async joinGroup(groupId: string): Promise<void> {
-    const { welcome } = await fetchMlsWelcomeHttp(
+    const { welcome, route } = await fetchMlsWelcomeHttp(
       this.opts.relayBaseUrl,
       this.opts.signer,
       this.opts.channelId,
       groupId,
     );
+    await this.registerRoute(groupId, route);
     const welcomeBytes = base64UrlToBytes(welcome);
     const stored = await this.opts.keyPackageManager.listStoredKeyPackages();
     if (stored.length === 0) {
@@ -135,7 +149,8 @@ export class MlsChannelConnection {
       if (!loaded) throw new Error(`MLS group ${groupId} not ready`);
     }
     const mlsPayload = await session.encryptApplication(bytes);
-    const envelope = encodeRelayMlsEnvelope(groupId, mlsPayload);
+    const route = await this.routeForGroup(groupId);
+    const envelope = encodeRelayMlsEnvelope(route, mlsPayload);
     this.peer?.send(envelope);
   }
 
@@ -212,15 +227,16 @@ export class MlsChannelConnection {
     });
   }
 
-  private async handleMlsEnvelope(
-    envelope: ReturnType<typeof decodeRelayMlsEnvelope> & object,
-  ): Promise<void> {
-    const session = this.groupSession(envelope.groupId);
+  private async handleMlsEnvelope(envelope: DecodedRelayMlsEnvelope): Promise<void> {
+    const groupId = await this.groupIdFromEnvelope(envelope);
+    if (groupId === undefined) return;
+
+    const session = this.groupSession(groupId);
     if (!session.ready) {
       const loaded = await session.load();
       if (!loaded) return;
     }
-    this.scheduleRekey(envelope.groupId);
+    this.scheduleRekey(groupId);
     const plaintext = await session.processInboundMessage(envelope.payload);
     if (plaintext === undefined) {
       return;
@@ -231,7 +247,7 @@ export class MlsChannelConnection {
       this.wireRouter.extractSessionId(plaintext);
       this.pushInbound(plaintext);
     }
-    this.opts.onGroupMessage?.(envelope.groupId, plaintext);
+    this.opts.onGroupMessage?.(groupId, plaintext);
   }
 
   private rekeyIntervalMs(): number {
@@ -260,6 +276,40 @@ export class MlsChannelConnection {
       if (!loaded) return;
     }
     const mlsPayload = await session.createSelfRekeyMessage();
-    this.peer?.send(encodeRelayMlsEnvelope(groupId, mlsPayload));
+    const route = await this.routeForGroup(groupId);
+    this.peer?.send(encodeRelayMlsEnvelope(route, mlsPayload));
+  }
+
+  private async registerRoute(groupId: string, route: string): Promise<void> {
+    this.routeByGroup.set(groupId, route);
+    this.groupByRoute.set(route, groupId);
+    await this.opts.persistence?.saveRouteHandle?.(groupId, route);
+  }
+
+  private async routeForGroup(groupId: string): Promise<string> {
+    const cached = this.routeByGroup.get(groupId);
+    if (cached !== undefined) return cached;
+    const loaded = await this.opts.persistence?.loadRouteHandle?.(groupId);
+    if (loaded !== undefined) {
+      this.routeByGroup.set(groupId, loaded);
+      this.groupByRoute.set(loaded, groupId);
+      return loaded;
+    }
+    throw new Error(`MLS route handle missing for group ${groupId}`);
+  }
+
+  private async groupIdFromEnvelope(
+    envelope: DecodedRelayMlsEnvelope,
+  ): Promise<string | undefined> {
+    const cached = this.groupByRoute.get(envelope.route);
+    if (cached !== undefined) return cached;
+    for (const groupId of this.groups.keys()) {
+      const route = await this.opts.persistence?.loadRouteHandle?.(groupId);
+      if (route === envelope.route) {
+        await this.registerRoute(groupId, route);
+        return groupId;
+      }
+    }
+    return undefined;
   }
 }

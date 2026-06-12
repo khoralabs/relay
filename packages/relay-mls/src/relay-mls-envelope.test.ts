@@ -1,19 +1,26 @@
 import { describe, expect, test } from "bun:test";
+import { RELAY_MLS_ENVELOPE_VERSION } from "@khoralabs/relay-contracts";
 
-import { decodeRelayMlsEnvelope, encodeRelayMlsEnvelope } from "./relay-mls-envelope";
+import {
+  decodeRelayMlsEnvelope,
+  encodeRelayMlsEnvelope,
+  generateRouteHandle,
+} from "./relay-mls-envelope";
 
 describe("relay-mls-envelope", () => {
-  test("round-trip mls1 envelope", () => {
+  test("mls2 round-trip with opaque route", () => {
     const payload = new TextEncoder().encode("hello");
-    const wire = encodeRelayMlsEnvelope("session-1", payload);
+    const route = generateRouteHandle();
+    const wire = encodeRelayMlsEnvelope(route, payload);
     const decoded = decodeRelayMlsEnvelope(wire);
-    expect(decoded?.groupId).toBe("session-1");
+    expect(decoded?.v).toBe(RELAY_MLS_ENVELOPE_VERSION);
+    expect(decoded?.route).toBe(route);
     expect(decoded?.payload).toEqual(payload);
   });
 
-  test("non-mls1 envelope returns undefined", () => {
+  test("unknown profile returns undefined", () => {
     const wire = new TextEncoder().encode(
-      JSON.stringify({ v: "plain1", groupId: "x", payload: "a" }),
+      JSON.stringify({ v: "mls1", groupId: "x", payload: "a" }),
     );
     expect(decodeRelayMlsEnvelope(wire)).toBeUndefined();
   });

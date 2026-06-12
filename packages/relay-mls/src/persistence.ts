@@ -17,11 +17,15 @@ export type MlsStatePersistenceAdapter = {
   loadGroupState(groupId: string): Promise<Uint8Array | undefined>;
   saveGroupState(groupId: string, stateBytes: Uint8Array): Promise<void>;
   deleteGroupState(groupId: string): Promise<void>;
+  loadRouteHandle?(groupId: string): Promise<string | undefined>;
+  saveRouteHandle?(groupId: string, route: string): Promise<void>;
+  deleteRouteHandle?(groupId: string): Promise<void>;
 };
 
 /** In-process only; does not encrypt (secrets live in heap). */
 export class MemoryMlsStatePersistence implements MlsStatePersistenceAdapter {
   private readonly store = new Map<string, Uint8Array>();
+  private readonly routes = new Map<string, string>();
 
   loadGroupState(groupId: string): Promise<Uint8Array | undefined> {
     return Promise.resolve(this.store.get(groupId));
@@ -34,6 +38,21 @@ export class MemoryMlsStatePersistence implements MlsStatePersistenceAdapter {
 
   deleteGroupState(groupId: string): Promise<void> {
     this.store.delete(groupId);
+    this.routes.delete(groupId);
+    return Promise.resolve();
+  }
+
+  loadRouteHandle(groupId: string): Promise<string | undefined> {
+    return Promise.resolve(this.routes.get(groupId));
+  }
+
+  saveRouteHandle(groupId: string, route: string): Promise<void> {
+    this.routes.set(groupId, route);
+    return Promise.resolve();
+  }
+
+  deleteRouteHandle(groupId: string): Promise<void> {
+    this.routes.delete(groupId);
     return Promise.resolve();
   }
 }

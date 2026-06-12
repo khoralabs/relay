@@ -61,9 +61,9 @@ All mutating HTTP endpoints require a DID-signed request envelope. Hosts **must*
 
 **MLS KeyPackage fetch** (`GET /v1/key-packages/:did`) requires DID-signed auth and per-requester rate limits. Each successful fetch claims one KeyPackage from the peer's pool. The relay cannot mint keys — hosts should run `@khoralabs/relay-mls` `KeyPackageManager` (via `RelayClient.createKeyPackageManager`) to poll `GET /v1/key-packages/status` and append packages via `POST /v1/key-packages/batch` before the pool is depleted.
 
-**MLS Welcome store** (`POST/GET .../sessions/:id/mls-welcome`) holds opaque Welcome blobs for bilateral session bootstrap. Only the session initiator may publish; session parties may fetch.
+**MLS Welcome store** (`POST/GET .../sessions/:id/mls-welcome`) holds opaque Welcome blobs and the per-session bus `route` handle (`mls2`). Only the session initiator may publish; session parties may fetch once (delete-on-read). Rows are also removed on session release and when channels expire.
 
-**Two integration profiles (no in-band negotiation):** `MlsChannelConnection` uses RFC 9420 MLS inside `khora.obp.frame.mls#MlsHubEnvelope` (`mls1`); `connectRelay` uses plaintext bytes. Callers pick the profile for their trust context. Peer timing uses `RelayTimingFrame` (`rt1`) with HLC inside MLS payloads; the hub forwards opaque blobs.
+**Two integration profiles (no in-band negotiation):** `MlsChannelConnection` uses RFC 9420 MLS inside `khora.obp.frame.mls#MlsHubEnvelope` (`mls2` with opaque route on the bus). `connectRelay` uses plaintext bytes. Peer timing uses `RelayTimingFrame` (`rt1`) with HLC inside MLS payloads; the hub forwards opaque blobs.
 
 **MLS group state at rest:** Persisted MLS group bytes (`encodeGroupState`) contain ratchet secrets. Use `createEncryptingMlsStatePersistence` or `createFileMlsStatePersistence` with `RELAY_MLS_GROUP_STATE_ENCRYPTION_KEY` (32-byte hex or base64url in production). Plain `MemoryMlsStatePersistence` is for tests only.
 

@@ -14,18 +14,27 @@ function str(v: unknown, field: string): string {
 
 export type PublishMlsWelcomeBody = {
   welcome: string;
+  /** Opaque bus route for `mls2` envelopes (base64url). */
+  route: string;
 };
 
 export type FetchedMlsWelcome = {
   welcome: string;
+  route: string;
 };
 
 export function parsePublishMlsWelcomeBody(v: unknown): PublishMlsWelcomeBody {
   const o = obj(v, "PublishMlsWelcomeBody");
-  return { welcome: str(o.welcome, "welcome") };
+  return {
+    welcome: str(o.welcome, "welcome"),
+    route: str(o.route, "route"),
+  };
 }
 
 export function parseFetchedMlsWelcome(v: unknown): FetchedMlsWelcome {
   const o = obj(v, "FetchedMlsWelcome");
-  return { welcome: str(o.welcome, "welcome") };
+  return {
+    welcome: str(o.welcome, "welcome"),
+    route: str(o.route, "route"),
+  };
 }

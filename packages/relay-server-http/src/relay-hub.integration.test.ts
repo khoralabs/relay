@@ -15,7 +15,7 @@ describe("createRelayHub opaque relay", () => {
     await hub.attachPeer("ch-stamp", peerA, ticket);
     await hub.attachPeer("ch-stamp", peerB, ticket);
     const inbound = new TextEncoder().encode(
-      JSON.stringify({ v: "mls1", groupId: "sid", payload: "YWJj" }),
+      JSON.stringify({ v: "mls2", route: "opaque-route", payload: "YWJj" }),
     );
     hub.relayBytes("ch-stamp", peerA, inbound);
     expect(receivedA.length).toBe(1);

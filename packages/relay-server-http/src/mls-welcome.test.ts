@@ -61,6 +61,7 @@ describe("mls-welcome", () => {
     const welcomePath = `/v1/channels/${encodeURIComponent(created.channelId)}/sessions/${encodeURIComponent(sessionId)}/mls-welcome`;
     const welcomeBody = JSON.stringify({
       welcome: bytesToBase64Url(new Uint8Array([0x01, 0x02, 0x03])),
+      route: bytesToBase64Url(new Uint8Array(16).fill(0xab)),
     });
     const publishRes = await signedFetch(base, {
       method: "POST",
@@ -79,6 +80,83 @@ describe("mls-welcome", () => {
       did: counterparty.did,
     });
     expect(counterpartyPublish.status).toBe(403);
+
+    server.stop();
+    cleanup();
+  });
+
+  test("fetch welcome deletes row (delete-on-read)", async () => {
+    const { app, cleanup } = await createTestRelayApp();
+    const server = Bun.serve({
+      port: 0,
+      fetch(req, srv) {
+        return app.fetch(req, srv);
+      },
+      websocket: app.websocket,
+    });
+    const base = `http://127.0.0.1:${server.port}`;
+
+    const { initiator, counterparty } = await pairWithLexicographicInitiator();
+
+    const createRes = await signedFetch(base, {
+      method: "POST",
+      path: signedPath("/v1/channels"),
+      bodyText: "{}",
+      privateKey: initiator.privateKey,
+      did: initiator.did,
+    });
+    const created = (await createRes.json()) as { channelId: string; inviteToken: string };
+
+    await signedFetch(base, {
+      method: "POST",
+      path: signedPath("/v1/channels/join"),
+      bodyText: JSON.stringify({ inviteToken: created.inviteToken }),
+      privateKey: counterparty.privateKey,
+      did: counterparty.did,
+    });
+
+    const sessionId = "sess-delete-on-read";
+    const channelPath = `/v1/channels/${encodeURIComponent(created.channelId)}`;
+    await signedFetch(base, {
+      method: "POST",
+      path: `${channelPath}/sessions/allocate`,
+      bodyText: JSON.stringify({ sessionId, counterpartyDid: counterparty.did }),
+      privateKey: initiator.privateKey,
+      did: initiator.did,
+    });
+
+    const welcomePath = `${channelPath}/sessions/${encodeURIComponent(sessionId)}/mls-welcome`;
+    const route = bytesToBase64Url(new Uint8Array(16).fill(0xcd));
+    await signedFetch(base, {
+      method: "POST",
+      path: welcomePath,
+      bodyText: JSON.stringify({
+        welcome: bytesToBase64Url(new Uint8Array([0x09])),
+        route,
+      }),
+      privateKey: initiator.privateKey,
+      did: initiator.did,
+    });
+
+    const fetchRes = await signedFetch(base, {
+      method: "GET",
+      path: welcomePath,
+      bodyText: "",
+      privateKey: counterparty.privateKey,
+      did: counterparty.did,
+    });
+    expect(fetchRes.ok).toBe(true);
+    const body = (await fetchRes.json()) as { welcome: string; route: string };
+    expect(body.route).toBe(route);
+
+    const secondFetch = await signedFetch(base, {
+      method: "GET",
+      path: welcomePath,
+      bodyText: "",
+      privateKey: counterparty.privateKey,
+      did: counterparty.did,
+    });
+    expect(secondFetch.status).toBe(404);
 
     server.stop();
     cleanup();

@@ -41,6 +41,8 @@ export async function handlePublishMlsWelcome(
     return jsonError("only session initiator may publish welcome", 403);
   }
 
+  deps.registry.purgeExpiredMlsWelcomes(t);
+
   let body: ReturnType<typeof parsePublishMlsWelcomeBody>;
   try {
     body = parsePublishMlsWelcomeBody(JSON.parse(bodyText) as unknown);
@@ -54,6 +56,7 @@ export async function handlePublishMlsWelcome(
     sessionId,
     publisherDid: did,
     welcome: base64UrlToBytes(body.welcome),
+    route: body.route,
     nowMs: t,
   });
   return Response.json({ ok: true as const });
@@ -86,8 +89,13 @@ export async function handleFetchMlsWelcome(
     return jsonError("not a session party", 403);
   }
 
-  const welcome = deps.registry.fetchMlsWelcome(channelId, sessionId);
-  if (welcome === undefined) return jsonError("welcome not found", 404);
+  deps.registry.purgeExpiredMlsWelcomes(t);
 
-  return Response.json({ welcome: bytesToBase64Url(welcome) });
+  const fetched = deps.registry.fetchMlsWelcome(channelId, sessionId);
+  if (fetched === undefined) return jsonError("welcome not found", 404);
+
+  return Response.json({
+    welcome: bytesToBase64Url(fetched.welcome),
+    route: fetched.route,
+  });
 }

@@ -28,7 +28,7 @@ HTTP API types for channel create/join/ticket/ws-nonce are in the `channels` mod
 
 ## OBP wire (peer agreement)
 
-Negotiation `Frame`, MLS `mls1` envelope, and NBC timing are defined in OBP (`@khoralabs/obp-frames-impl`, `khora.obp.frame.mls`). The relay forwards blobs; clients decode OBP after MLS/timing unwrap.
+Negotiation `Frame`, MLS hub envelopes (`mls2`), and NBC timing are defined in OBP (`@khoralabs/obp-frames-impl`, `khora.obp.frame.mls`). The relay forwards blobs; clients decode OBP after MLS/timing unwrap.
 
 ## Install
 

@@ -90,10 +90,21 @@ export function ensureChannelRegistrySchema(db: Database): void {
       session_id TEXT NOT NULL,
       publisher_did TEXT NOT NULL,
       welcome BLOB NOT NULL,
+      route TEXT,
       created_ms INTEGER NOT NULL,
       PRIMARY KEY (channel_id, session_id)
     );
   `);
+
+  migrateRelayMlsWelcomesRoute(db);
+}
+
+/** Add opaque bus route for mls2 welcome handoff. */
+function migrateRelayMlsWelcomesRoute(db: Database): void {
+  const columns = db.query<{ name: string }, []>("PRAGMA table_info(relay_mls_welcomes)").all();
+  if (!columns.some((c) => c.name === "route")) {
+    db.run("ALTER TABLE relay_mls_welcomes ADD COLUMN route TEXT");
+  }
 }
 
 /** Add initiator_did for MLS welcome publish auth (allocate caller, not sorted party_a). */

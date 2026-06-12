@@ -48,7 +48,7 @@ Oldest rows are dropped when limits are exceeded. Spool is optional per channel 
 ## Wire policy
 
 - **No `RelayEnvelope`** — the relay never wraps `{ frame: Frame }`. After MLS decrypt (or on custodial plaintext), bytes follow `khora.obp.frame#NegotiationFrameProtocol` (bare `Frame`, `init`, multiplex). See OBP `mls-hub-protocol.smithy`.
-- **MLS profile (internet default):** outer bus `mls1` (`MlsHubEnvelope`); inner `RelayTimingFrame` (`rt1`) then multiplex. See [multiplex-groups.md](./multiplex-groups.md).
+- **MLS profile (internet default):** outer bus `mls2` (`MlsHubEnvelope` with opaque `route`); inner `RelayTimingFrame` (`rt1`) then multiplex. See [multiplex-groups.md](./multiplex-groups.md).
 - **Custodial plaintext:** `rt1` + multiplex without MLS.
 
 ## Echo rule

@@ -92,6 +92,9 @@ export function createChannelRegistry(db: Database) {
     `UPDATE ws_upgrade_nonces SET consumed_at_ms = ?
      WHERE nonce_hash = ? AND channel_id = ? AND consumed_at_ms IS NULL AND expires_at_ms > ?`,
   );
+  const deleteMlsWelcomeStmt = db.prepare(
+    `DELETE FROM relay_mls_welcomes WHERE channel_id = ? AND session_id = ?`,
+  );
 
   return {
     countActiveChannels(nowMs: number): number {
@@ -373,6 +376,7 @@ export function createChannelRegistry(db: Database) {
         return false;
       }
       releaseSessionStmt.run(channelId, sessionId);
+      deleteMlsWelcomeStmt.run(channelId, sessionId);
       return true;
     },
 
@@ -559,26 +563,54 @@ export function createChannelRegistry(db: Database) {
       sessionId: string;
       publisherDid: string;
       welcome: Uint8Array;
+      route: string;
       nowMs: number;
     }): void {
       db.run(
-        `INSERT INTO relay_mls_welcomes (channel_id, session_id, publisher_did, welcome, created_ms)
-         VALUES (?, ?, ?, ?, ?)
+        `INSERT INTO relay_mls_welcomes (channel_id, session_id, publisher_did, welcome, route, created_ms)
+         VALUES (?, ?, ?, ?, ?, ?)
          ON CONFLICT(channel_id, session_id) DO UPDATE SET
            publisher_did = excluded.publisher_did,
            welcome = excluded.welcome,
+           route = excluded.route,
            created_ms = excluded.created_ms`,
-        [input.channelId, input.sessionId, input.publisherDid, input.welcome, input.nowMs],
+        [
+          input.channelId,
+          input.sessionId,
+          input.publisherDid,
+          input.welcome,
+          input.route,
+          input.nowMs,
+        ],
       );
     },
 
-    fetchMlsWelcome(channelId: string, sessionId: string): Uint8Array | undefined {
+    fetchMlsWelcome(
+      channelId: string,
+      sessionId: string,
+    ): { welcome: Uint8Array; route: string } | undefined {
       const row = db
-        .query<{ welcome: Uint8Array }, [string, string]>(
-          `SELECT welcome FROM relay_mls_welcomes WHERE channel_id = ? AND session_id = ?`,
+        .query<{ welcome: Uint8Array; route: string | null }, [string, string]>(
+          `SELECT welcome, route FROM relay_mls_welcomes WHERE channel_id = ? AND session_id = ?`,
         )
         .get(channelId, sessionId);
-      return row?.welcome;
+      if (row === undefined || row === null) return undefined;
+      if (row.route === null || row.route.length === 0) return undefined;
+      deleteMlsWelcomeStmt.run(channelId, sessionId);
+      return { welcome: row.welcome, route: row.route };
+    },
+
+    deleteMlsWelcome(channelId: string, sessionId: string): void {
+      deleteMlsWelcomeStmt.run(channelId, sessionId);
+    },
+
+    purgeExpiredMlsWelcomes(nowMs: number): number {
+      const result = db.run(
+        `DELETE FROM relay_mls_welcomes
+         WHERE channel_id IN (SELECT channel_id FROM channels WHERE expires_at_ms <= ?)`,
+        [nowMs],
+      );
+      return Number(result.changes ?? 0);
     },
 
     getSessionParties(

@@ -48,7 +48,12 @@ export {
   verifyKeyPackageForDid,
 } from "./relay-mls-auth";
 export { getRelayMlsCiphersuite } from "./relay-mls-ciphersuite";
-export { decodeRelayMlsEnvelope, encodeRelayMlsEnvelope } from "./relay-mls-envelope";
+export {
+  type DecodedRelayMlsEnvelope,
+  decodeRelayMlsEnvelope,
+  encodeRelayMlsEnvelope,
+  generateRouteHandle,
+} from "./relay-mls-envelope";
 export { didFromRelayCredential, relayDidCredential } from "./relay-mls-identity";
 export {
   type Ed25519KeyPair,
