@@ -1,16 +1,19 @@
 # @khoralabs/relay-contracts
 
-Shared TypeScript types used by both the relay server and client. No runtime dependencies beyond `@khoralabs/relay-crypto`.
+Shared TypeScript types used by both the relay server and client. Runtime dependencies are limited to `@khoralabs/relay-crypto` (signer type only).
 
 ## Contents
 
 | Module | Description |
 |---|---|
 | `auth-wire` | `Agent-Request` header format and DID auth wire types |
-| `channels` | Channel creation, join, ticket, and session types |
+| `channels` | Channel create/join, tickets, WS upgrade nonces, session allocate/release |
 | `roster` | Actor registration and roster response types |
-| `relay-timing` | `RelayTimingFrame` (`rt1`) encode/decode for HLC peer timing |
-| `relay-crypto-profile` | MLS / plaintext integration profile constants |
+| `key-packages` | MLS KeyPackage pool publish/append/fetch wire types |
+| `mls-welcome` | MLS Welcome publish/fetch wire types (opaque blob + `route` handle) |
+| `relay-crypto-profile` | MLS envelope version (`mls2`), ciphersuite name/id |
+| `relay-timing` / `relay-timing-layer` | `RelayTimingFrame` (`rt1`) encode/decode and `withTiming` helper |
+| `relay-hlc` | Hybrid logical clock types for peer timing |
 
 ## Persistence ports (relay infrastructure)
 

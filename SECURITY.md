@@ -37,9 +37,11 @@ Anyone with **both** the database file and the field encryption key can still mi
 
 ### WebSocket admission
 
-WebSocket connections require a **one-time upgrade nonce** minted by an authorized channel member via DID-signed HTTP (`POST /v1/channels/:id/ws-nonce`). The nonce is consumed on upgrade; replay with the same nonce fails. Nonce TTL is fixed by the registry (default 60s).
+WebSocket connections require a **one-time upgrade nonce** minted by an authorized channel member via DID-signed HTTP (`POST /v1/channels/:id/ws-nonce`, or bundled in create/join/ticket responses). The nonce is consumed on upgrade; replay with the same nonce fails. Nonce TTL is **60 seconds** (`DEFAULT_WS_UPGRADE_NONCE_TTL_MS` in `@khoralabs/relay-admission`). Clients pass the nonce via `Sec-WebSocket-Protocol` (`relay.nonce.<nonce>`) or `X-Relay-Upgrade-Nonce` — not via the HMAC ticket field in JSON responses.
 
-After a successful upgrade, the hub issues an HMAC **channel ticket** bound to the channel pairing secret. That ticket is **reusable until the channel `expiresAtMs`** — there is no per-ticket TTL or single-use rotation today. Treat stolen tickets as valid for the remaining channel lifetime.
+After a successful upgrade, the hub mints an HMAC **channel ticket** server-side and binds it to the WebSocket peer. That ticket is **reusable until the channel `expiresAtMs`** — there is no per-ticket TTL or single-use rotation today. Treat stolen tickets as valid for the remaining channel lifetime.
+
+**Ingress limits:** each channel enforces per-minute caps on WebSocket frame count and total bytes (`RELAY_RL_WS_FRAMES_PER_MIN_PER_CHANNEL`, default 1200; `RELAY_RL_WS_BYTES_PER_MIN_PER_CHANNEL`, default 1 MiB). Single-frame size is capped at **64 KiB** (`MAX_RELAY_WS_FRAME_BYTES`).
 
 **Origin policy** (cross-site WebSocket hijacking):
 
@@ -53,7 +55,7 @@ IP rate limits apply to the upgrade path. Use TLS termination when upgrades are 
 
 ### DID-signed HTTP requests
 
-All mutating HTTP endpoints require a DID-signed request envelope. Hosts **must** verify the signing DID matches an authorized principal for the resource being accessed. The relay does not maintain a global trust registry — channel membership determines authorization.
+All HTTP endpoints except `/health` require a DID-signed request envelope. Hosts **must** verify the signing DID matches an authorized principal for the resource being accessed. The relay does not maintain a global trust registry — channel membership determines authorization.
 
 **Replay protection and rate limits** use the relay SQLite database by default (`agent_request_nonces`, `rate_limit_counters` on `RELAY_DB_PATH`). That survives process restart on a **single instance**.
 
@@ -63,7 +65,7 @@ All mutating HTTP endpoints require a DID-signed request envelope. Hosts **must*
 
 **MLS Welcome store** (`POST/GET .../sessions/:id/mls-welcome`) holds opaque Welcome blobs and the per-session bus `route` handle (`mls2`). Only the session initiator may publish; session parties may fetch once (delete-on-read). Rows are also removed on session release and when channels expire.
 
-**Two integration profiles (no in-band negotiation):** `MlsChannelConnection` uses RFC 9420 MLS inside `khora.obp.frame.mls#MlsHubEnvelope` (`mls2` with opaque route on the bus). `connectRelay` uses plaintext bytes. Peer timing uses `RelayTimingFrame` (`rt1`) with HLC inside MLS payloads; the hub forwards opaque blobs.
+**Two integration profiles (no in-band negotiation):** `MlsChannelConnection` (`@khoralabs/relay-mls`) uses RFC 9420 MLS inside `khora.obp.frame.mls#MlsHubEnvelope` (`mls2` with opaque `route` on the bus). `connectRelay` / `connectTimedRelay` (`@khoralabs/relay-client`) send plaintext bytes; `connectTimedRelay` wraps payloads in `RelayTimingFrame` (`rt1`) with HLC. The hub forwards opaque blobs in all cases.
 
 **MLS group state at rest:** Persisted MLS group bytes (`encodeGroupState`) contain ratchet secrets. Use `createEncryptingMlsStatePersistence` or `createFileMlsStatePersistence` with `RELAY_MLS_GROUP_STATE_ENCRYPTION_KEY` (32-byte hex or base64url in production). Plain `MemoryMlsStatePersistence` is for tests only.
 
