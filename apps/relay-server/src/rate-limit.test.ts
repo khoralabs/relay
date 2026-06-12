@@ -13,8 +13,8 @@ import {
 
 test("rate limiter returns 429", async () => {
   const limiter = createRateLimiter({ windowMs: 60_000, max: 1 });
-  const first = limiter("k");
-  const second = limiter("k");
+  const first = await limiter("k");
+  const second = await limiter("k");
   expect(first.ok).toBe(true);
   expect(second.ok).toBe(false);
   if (!second.ok) expect(second.retryAfterSec).toBeGreaterThan(0);
