@@ -19,8 +19,9 @@ export async function handleSessionAllocate(
   req: Request,
   url: URL,
   channelIdRaw: string,
+  server?: Bun.Server<unknown>,
 ): Promise<Response> {
-  const ipCheck = await checkDefaultIpRateLimit(req, deps.rateLimiters);
+  const ipCheck = await checkDefaultIpRateLimit(deps, req, server);
   if (ipCheck !== undefined) return ipCheck;
 
   const bodyRead = await readBoundedBody(req);
@@ -75,8 +76,9 @@ export async function handleSessionStatus(
   url: URL,
   channelIdRaw: string,
   sessionIdRaw: string,
+  server?: Bun.Server<unknown>,
 ): Promise<Response> {
-  const ipCheck = await checkDefaultIpRateLimit(req, deps.rateLimiters);
+  const ipCheck = await checkDefaultIpRateLimit(deps, req, server);
   if (ipCheck !== undefined) return ipCheck;
 
   const authed = await requireAuthedDid(deps.auth, req, url, "");
@@ -104,8 +106,9 @@ export async function handleSessionRelease(
   url: URL,
   channelIdRaw: string,
   sessionIdRaw: string,
+  server?: Bun.Server<unknown>,
 ): Promise<Response> {
-  const ipCheck = await checkDefaultIpRateLimit(req, deps.rateLimiters);
+  const ipCheck = await checkDefaultIpRateLimit(deps, req, server);
   if (ipCheck !== undefined) return ipCheck;
 
   const authed = await requireAuthedDid(deps.auth, req, url, "");

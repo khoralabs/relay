@@ -13,8 +13,9 @@ export async function handleChannelsInviteJoin(
   deps: RelayHttpDeps,
   req: Request,
   url: URL,
+  server?: Bun.Server<unknown>,
 ): Promise<Response> {
-  const ipCheck = await checkDefaultIpRateLimit(req, deps.rateLimiters);
+  const ipCheck = await checkDefaultIpRateLimit(deps, req, server);
   if (ipCheck !== undefined) return ipCheck;
 
   const bodyRead = await readBoundedBody(req);

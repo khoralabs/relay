@@ -13,4 +13,6 @@ export type RelayHttpDeps = {
   rateLimiters: RelayRateLimiters;
   relayProfile: RelayProfile;
   now: () => number;
+  trustedProxy: boolean;
+  clientIp(req: Request, server?: Bun.Server<unknown>): string;
 };

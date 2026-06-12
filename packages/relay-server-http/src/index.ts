@@ -41,11 +41,15 @@ export {
 export { createInMemoryNonceStore } from "./in-memory-nonce-store";
 export type { NonceStore } from "./nonce-store";
 export {
+  type ClientIpOptions,
   clientIpFromRequest,
   createInMemoryRateLimiter,
+  peerAddressFromRequest,
   type RateLimitCheck,
   type RateLimiter,
   type RateLimitRule,
+  RELAY_TRUSTED_PROXY_ENV,
+  relayTrustedProxyFromEnv,
 } from "./rate-limit";
 export {
   createRelayRateLimiters,

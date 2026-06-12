@@ -36,19 +36,19 @@ export async function routeRelayHttp(
   }
 
   if (req.method === "POST" && url.pathname === "/v1/channels/join") {
-    return handleChannelsInviteJoin(deps, req, url);
+    return handleChannelsInviteJoin(deps, req, url, server);
   }
 
   if (req.method === "POST" && url.pathname === "/v1/channels") {
     if (deps.relayProfile.mode === "single") {
       return jsonError("channel spawn is orchestrator-only; this relay hosts one channel", 501);
     }
-    return handleChannelsCreate(deps, req, url);
+    return handleChannelsCreate(deps, req, url, server);
   }
 
   const allocateMatch = channelAllocatePathRe.exec(url.pathname);
   if (req.method === "POST" && allocateMatch !== null) {
-    return handleSessionAllocate(deps, req, url, allocateMatch[1] as string);
+    return handleSessionAllocate(deps, req, url, allocateMatch[1] as string, server);
   }
 
   const sessionStatusMatch = channelSessionStatusPathRe.exec(url.pathname);
@@ -59,6 +59,7 @@ export async function routeRelayHttp(
       url,
       sessionStatusMatch[1] as string,
       sessionStatusMatch[2] as string,
+      server,
     );
   }
 
@@ -70,36 +71,37 @@ export async function routeRelayHttp(
       url,
       releaseMatch[1] as string,
       releaseMatch[2] as string,
+      server,
     );
   }
 
   const ticketMatch = channelTicketPathRe.exec(url.pathname);
   if (req.method === "POST" && ticketMatch !== null) {
-    return handleChannelMintTicket(deps, req, url, ticketMatch[1] as string);
+    return handleChannelMintTicket(deps, req, url, ticketMatch[1] as string, server);
   }
 
   const joinTokensMatch = channelJoinTokensPathRe.exec(url.pathname);
   if (req.method === "POST" && joinTokensMatch !== null) {
-    return handleChannelMintJoinToken(deps, req, url, joinTokensMatch[1] as string);
+    return handleChannelMintJoinToken(deps, req, url, joinTokensMatch[1] as string, server);
   }
 
   const wsNonceMatch = channelWsNoncePathRe.exec(url.pathname);
   if (req.method === "POST" && wsNonceMatch !== null) {
-    return handleChannelMintWsNonce(deps, req, url, wsNonceMatch[1] as string);
+    return handleChannelMintWsNonce(deps, req, url, wsNonceMatch[1] as string, server);
   }
 
   const actorMatch = channelActorPathRe.exec(url.pathname);
   if (req.method === "POST" && actorMatch !== null) {
-    return handleRegisterActor(deps, req, url, actorMatch[1] as string);
+    return handleRegisterActor(deps, req, url, actorMatch[1] as string, server);
   }
 
   const rosterMatch = channelRosterPathRe.exec(url.pathname);
   if (req.method === "GET" && rosterMatch !== null) {
-    return handleGetRoster(deps, req, url, rosterMatch[1] as string);
+    return handleGetRoster(deps, req, url, rosterMatch[1] as string, server);
   }
 
   if (req.method === "POST" && prekeysPathRe.test(url.pathname)) {
-    return handlePublishPreKeys(deps, req, url);
+    return handlePublishPreKeys(deps, req, url, server);
   }
 
   const prekeyDidMatch = prekeyDidPathRe.exec(url.pathname);

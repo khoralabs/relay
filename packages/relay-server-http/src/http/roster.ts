@@ -15,8 +15,9 @@ export async function handleRegisterActor(
   req: Request,
   url: URL,
   channelIdRaw: string,
+  server?: Bun.Server<unknown>,
 ): Promise<Response> {
-  const ipCheck = await checkDefaultIpRateLimit(req, deps.rateLimiters);
+  const ipCheck = await checkDefaultIpRateLimit(deps, req, server);
   if (ipCheck !== undefined) return ipCheck;
 
   const bodyText = await readBoundedBody(req);
@@ -49,8 +50,9 @@ export async function handleGetRoster(
   req: Request,
   url: URL,
   channelIdRaw: string,
+  server?: Bun.Server<unknown>,
 ): Promise<Response> {
-  const ipCheck = await checkDefaultIpRateLimit(req, deps.rateLimiters);
+  const ipCheck = await checkDefaultIpRateLimit(deps, req, server);
   if (ipCheck !== undefined) return ipCheck;
 
   const authed = await requireAuthedDid(deps.auth, req, url, "");

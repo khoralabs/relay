@@ -2,8 +2,7 @@ import type { RelayChannelPolicy } from "@khoralabs/relay-contracts";
 
 import { MAX_AGENT_REQUEST_BODY_BYTES, type RelayAuth } from "../auth";
 import { RELAY_HTTP_HEADER } from "../http-headers";
-import { clientIpFromRequest, type RateLimitCheck, type RateLimiter } from "../rate-limit";
-import type { RelayRateLimiters } from "../rate-limit-buckets";
+import type { RateLimitCheck, RateLimiter } from "../rate-limit";
 import { authErrorResponse, jsonError, rateLimitedResponse } from "../responses";
 import type { RelayHttpDeps } from "./deps";
 
@@ -51,10 +50,11 @@ export async function checkRateLimitResponse(
 }
 
 export async function checkDefaultIpRateLimit(
+  deps: Pick<RelayHttpDeps, "rateLimiters" | "clientIp">,
   req: Request,
-  rateLimiters: RelayRateLimiters,
+  server?: Bun.Server<unknown>,
 ): Promise<Response | undefined> {
-  return checkRateLimitResponse(rateLimiters.defaultIp, clientIpFromRequest(req));
+  return checkRateLimitResponse(deps.rateLimiters.defaultIp, deps.clientIp(req, server));
 }
 
 export async function requireAuthedDid(

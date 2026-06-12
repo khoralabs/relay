@@ -34,6 +34,7 @@ Default port: **8790** (override with `PORT`).
 | `RELAY_PAIRING_SECRET_ENCRYPTION_KEY` | Field-level pairing secret encryption (32-byte hex or base64url in prod) | — |
 | `RELAY_REDIS_URL` | Redis URL for shared nonce/rate-limit state (required multi-instance) | — |
 | `RELAY_REDIS_PREFIX` | Key prefix for Redis state | `relay` |
+| `RELAY_TRUSTED_PROXY` | Honor `X-Forwarded-For` / `X-Real-IP` for IP rate limits (behind LB) | unset (use socket peer only) |
 
 Single-instance deployments can rely on SQLite (`RELAY_DB_PATH`) for agent-request nonce replay protection and HTTP rate limits. Behind a load balancer, set `RELAY_REDIS_URL`.
 

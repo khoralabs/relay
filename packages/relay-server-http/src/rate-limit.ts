@@ -2,6 +2,15 @@ import { RELAY_HTTP_HEADER } from "./http-headers";
 
 export type RateLimitRule = { windowMs: number; max: number };
 
+export const RELAY_TRUSTED_PROXY_ENV = "RELAY_TRUSTED_PROXY" as const;
+
+export type ClientIpOptions = {
+  trustedProxy?: boolean;
+  peerAddress?: string | null;
+  /** Trusted proxy hops counted from the right of X-Forwarded-For (default 1). */
+  trustedProxyHops?: number;
+};
+
 export function envRatePerMinute(
   raw: string | undefined,
   defaultMax: number,
@@ -12,6 +21,52 @@ export function envRatePerMinute(
   const n = Number(raw.trim());
   if (!Number.isFinite(n) || n <= 0) return null;
   return { windowMs: 60_000, max: Math.floor(n) };
+}
+
+export function relayTrustedProxyFromEnv(env: NodeJS.ProcessEnv = process.env): boolean {
+  const raw = env[RELAY_TRUSTED_PROXY_ENV]?.trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes";
+}
+
+export function peerAddressFromRequest(
+  server: Bun.Server<unknown> | undefined,
+  req: Request,
+): string | null {
+  if (server === undefined) return null;
+  const addr = server.requestIP(req);
+  return addr?.address ?? null;
+}
+
+function parseXForwardedForClientIp(xff: string, trustedProxyHops: number): string | undefined {
+  const parts = xff
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+  if (parts.length === 0) return undefined;
+  const hops = Math.max(1, trustedProxyHops);
+  const idx = parts.length - hops - 1;
+  const ip = idx >= 0 ? parts[idx] : parts[0];
+  return ip !== undefined && ip.length > 0 ? ip : undefined;
+}
+
+export function clientIpFromRequest(req: Request, opts?: ClientIpOptions): string {
+  const peer = opts?.peerAddress?.trim();
+  const fallback = peer !== undefined && peer.length > 0 ? peer : "direct";
+
+  if (opts?.trustedProxy !== true) {
+    return fallback;
+  }
+
+  const xff = req.headers.get(RELAY_HTTP_HEADER.xForwardedFor)?.trim();
+  if (xff !== undefined && xff.length > 0) {
+    const fromXff = parseXForwardedForClientIp(xff, opts.trustedProxyHops ?? 1);
+    if (fromXff !== undefined) return fromXff;
+  }
+
+  const realIp = req.headers.get(RELAY_HTTP_HEADER.xRealIp)?.trim();
+  if (realIp !== undefined && realIp.length > 0) return realIp;
+
+  return fallback;
 }
 
 export type RateLimitCheck = { ok: true } | { ok: false; retryAfterSec: number };
@@ -56,15 +111,4 @@ export function createInMemoryRateLimiter(rule: RateLimitRule | null): RateLimit
     buckets.set(key, hits);
     return { ok: true };
   };
-}
-
-export function clientIpFromRequest(req: Request): string {
-  const realIp = req.headers.get(RELAY_HTTP_HEADER.xRealIp)?.trim();
-  if (realIp !== undefined && realIp.length > 0) return realIp;
-  const xff = req.headers.get(RELAY_HTTP_HEADER.xForwardedFor)?.trim();
-  if (xff !== undefined && xff.length > 0) {
-    const first = xff.split(",")[0]?.trim();
-    if (first !== undefined && first.length > 0) return first;
-  }
-  return "direct";
 }

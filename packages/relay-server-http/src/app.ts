@@ -5,6 +5,11 @@ import { createNonceStore } from "./create-nonce-store";
 import type { RelayHttpDeps } from "./http/deps";
 import { routeRelayHttp } from "./http/router";
 import type { NonceStore } from "./nonce-store";
+import {
+  clientIpFromRequest,
+  peerAddressFromRequest,
+  relayTrustedProxyFromEnv,
+} from "./rate-limit";
 import { createRelayRateLimiters, type RelayRateLimiters } from "./rate-limit-buckets";
 import type { ChannelRegistry } from "./registry";
 import type { RelayProfile } from "./relay-config";
@@ -64,6 +69,12 @@ export function createRelayApp(opts: CreateRelayAppOptions): RelayApp {
     });
   const rateLimiters = opts.rateLimiters ?? createRelayRateLimiters(env, backing);
   const now = opts.now ?? (() => Date.now());
+  const trustedProxy = relayTrustedProxyFromEnv(env);
+  const clientIp = (req: Request, server?: Bun.Server<unknown>) =>
+    clientIpFromRequest(req, {
+      trustedProxy,
+      peerAddress: peerAddressFromRequest(server, req),
+    });
 
   const relayProfile =
     opts.relayProfile ??
@@ -77,6 +88,8 @@ export function createRelayApp(opts: CreateRelayAppOptions): RelayApp {
     rateLimiters,
     relayProfile,
     now,
+    trustedProxy,
+    clientIp,
   };
 
   return {
