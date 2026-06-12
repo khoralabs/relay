@@ -61,6 +61,7 @@ export async function handleSessionAllocate(
   const result = deps.registry.allocateSession({
     channelId,
     sessionId: parsed.sessionId,
+    initiatorDid: did,
     partyADid: did,
     partyBDid: parsed.counterpartyDid,
     maxSessions: channel.maxSessions,

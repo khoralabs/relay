@@ -10,23 +10,20 @@ import type {
   RelaySigner,
   RosterSnapshot,
 } from "@khoralabs/relay-contracts";
-import type { PreKeyBundle, PublishPreKeyBundleBody } from "@khoralabs/relay-crypto";
+import { KeyPackageManager, type KeyPackageManagerOptions } from "@khoralabs/relay-mls";
 
 import {
   allocateSessionHttp,
   createChannelHttp,
-  fetchPreKeysHttp,
   getRosterHttp,
   isSessionAllocatedHttp,
   joinChannelHttp,
   mintChannelTicketHttp,
   mintWsNonceHttp,
-  publishPreKeysHttp,
   registerActorHttp,
   releaseSessionHttp,
 } from "./channels";
 import { connectRelay, type RelayConnectOptions, type RelayPeerConnection } from "./connection";
-import { PreKeyManager, type PreKeyManagerOptions } from "./prekey-manager";
 
 export type RelayClientOptions = {
   relayBaseUrl: string;
@@ -75,22 +72,19 @@ export class RelayClient {
     return getRosterHttp(this.opts.relayBaseUrl, this.opts.signer, channelId);
   }
 
-  publishPreKeys(body: PublishPreKeyBundleBody): Promise<{ ok: true }> {
-    return publishPreKeysHttp(this.opts.relayBaseUrl, this.opts.signer, body);
-  }
-
-  fetchPreKeys(did: string): Promise<PreKeyBundle> {
-    return fetchPreKeysHttp(this.opts.relayBaseUrl, this.opts.signer, did);
-  }
-
-  createPreKeyManager(
-    identityPriv: Uint8Array,
-    opts?: Omit<PreKeyManagerOptions, "relayBaseUrl" | "signer" | "identityPriv">,
-  ): PreKeyManager {
-    return new PreKeyManager({
+  createKeyPackageManager(
+    myDid: string,
+    ed25519PrivateKey: Uint8Array,
+    opts?: Omit<
+      KeyPackageManagerOptions,
+      "relayBaseUrl" | "signer" | "myDid" | "ed25519PrivateKey"
+    >,
+  ): KeyPackageManager {
+    return new KeyPackageManager({
       relayBaseUrl: this.opts.relayBaseUrl,
       signer: this.opts.signer,
-      identityPriv,
+      myDid,
+      ed25519PrivateKey,
       ...opts,
     });
   }

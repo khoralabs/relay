@@ -11,20 +11,18 @@ import {
   type RelaySessionQuota,
   type RosterSnapshot,
 } from "@khoralabs/relay-contracts";
-import type { OneTimePreKey, PreKeyBundle, PublishPreKeyBundleBody } from "@khoralabs/relay-crypto";
 import { hashInviteToken } from "./invites";
 
-export type PreKeyFetchResult = {
-  bundle: PreKeyBundle;
-  remainingOneTimePreKeys: number;
-  oneTimePreKeyClaimed: boolean;
+export type KeyPackageFetchResult = {
+  keyPackage: Uint8Array;
+  remainingKeyPackages: number;
+  keyPackageClaimed: boolean;
 };
 
-export type PreKeyBundleStatus = {
+export type KeyPackagePoolStatus = {
   published: boolean;
-  remainingOneTimePreKeys: number;
-  signedPreKeyId?: number;
-  nextOneTimePreKeyId: number;
+  remainingKeyPackages: number;
+  nextKeyPackageId: number;
 };
 
 export type ChannelRow = {
@@ -80,8 +78,8 @@ export function createChannelRegistry(db: Database) {
     `UPDATE channel_invites SET redeemed_at_ms = ?, redeemed_by_did = ? WHERE token_hash = ?`,
   );
   const insertChainStmt = db.prepare(
-    `INSERT INTO channel_sessions (session_id, channel_id, party_a_did, party_b_did, status, created_at_ms)
-     VALUES (?, ?, ?, ?, 'active', ?)`,
+    `INSERT INTO channel_sessions (session_id, channel_id, party_a_did, party_b_did, initiator_did, status, created_at_ms)
+     VALUES (?, ?, ?, ?, ?, 'active', ?)`,
   );
   const releaseSessionStmt = db.prepare(
     `UPDATE channel_sessions SET status = 'released' WHERE channel_id = ? AND session_id = ?`,
@@ -288,6 +286,8 @@ export function createChannelRegistry(db: Database) {
     allocateSession(input: {
       channelId: string;
       sessionId: string;
+      /** Allocate caller (MLS group initiator); not necessarily lexicographically smaller than counterparty. */
+      initiatorDid: string;
       partyADid: string;
       partyBDid: string;
       maxSessions: RelaySessionQuota;
@@ -306,7 +306,14 @@ export function createChannelRegistry(db: Database) {
           if (total >= input.maxSessions.measure) {
             outcome = { ok: false, reason: "channel session capacity reached" };
           } else {
-            insertChainStmt.run(input.sessionId, input.channelId, a, b, input.createdAtMs);
+            insertChainStmt.run(
+              input.sessionId,
+              input.channelId,
+              a,
+              b,
+              input.initiatorDid,
+              input.createdAtMs,
+            );
             outcome = { ok: true };
           }
         } else {
@@ -331,7 +338,14 @@ export function createChannelRegistry(db: Database) {
             }
           }
           if (outcome.ok) {
-            insertChainStmt.run(input.sessionId, input.channelId, a, b, input.createdAtMs);
+            insertChainStmt.run(
+              input.sessionId,
+              input.channelId,
+              a,
+              b,
+              input.initiatorDid,
+              input.createdAtMs,
+            );
           }
         }
 
@@ -434,33 +448,16 @@ export function createChannelRegistry(db: Database) {
       };
     },
 
-    publishPreKeyBundle(did: string, body: PublishPreKeyBundleBody, nowMs: number): void {
+    publishKeyPackages(did: string, keyPackages: Uint8Array[], nowMs: number): void {
       db.run("BEGIN");
       try {
-        db.run(
-          `INSERT INTO prekey_bundles (principal_did, identity_key, spk_id, spk_pub, spk_sig, published_at_ms)
-           VALUES (?, ?, ?, ?, ?, ?)
-           ON CONFLICT(principal_did) DO UPDATE SET
-             identity_key = excluded.identity_key,
-             spk_id = excluded.spk_id,
-             spk_pub = excluded.spk_pub,
-             spk_sig = excluded.spk_sig,
-             published_at_ms = excluded.published_at_ms`,
-          [
-            did,
-            body.identityKey,
-            body.signedPreKey.keyId,
-            body.signedPreKey.publicKey,
-            body.signedPreKey.signature,
-            nowMs,
-          ],
+        db.run(`DELETE FROM relay_key_packages WHERE principal_did = ? AND claimed = 0`, [did]);
+        const insert = db.prepare(
+          `INSERT INTO relay_key_packages (principal_did, key_package, claimed, created_ms)
+           VALUES (?, ?, 0, ?)`,
         );
-        db.run(`DELETE FROM prekey_otks WHERE principal_did = ? AND claimed = 0`, [did]);
-        const insertOtk = db.prepare(
-          `INSERT INTO prekey_otks (principal_did, otk_id, otk_pub, claimed) VALUES (?, ?, ?, 0)`,
-        );
-        for (const otk of body.oneTimePreKeys) {
-          insertOtk.run(did, otk.keyId, otk.publicKey);
+        for (const kp of keyPackages) {
+          insert.run(did, kp, nowMs);
         }
         db.run("COMMIT");
       } catch (e) {
@@ -469,60 +466,45 @@ export function createChannelRegistry(db: Database) {
       }
     },
 
-    getPreKeyBundleStatus(did: string): PreKeyBundleStatus {
-      const row = db
-        .query<{ spk_id: number }, [string]>(
-          `SELECT spk_id FROM prekey_bundles WHERE principal_did = ?`,
-        )
-        .get(did);
-
-      const remainingOneTimePreKeys =
+    getKeyPackagePoolStatus(did: string): KeyPackagePoolStatus {
+      const remainingKeyPackages =
         db
           .query<{ n: number }, [string]>(
-            `SELECT COUNT(*) AS n FROM prekey_otks WHERE principal_did = ? AND claimed = 0`,
+            `SELECT COUNT(*) AS n FROM relay_key_packages WHERE principal_did = ? AND claimed = 0`,
           )
           .get(did)?.n ?? 0;
 
-      const maxOtkId =
+      const maxId =
         db
           .query<{ max_id: number | null }, [string]>(
-            `SELECT MAX(otk_id) AS max_id FROM prekey_otks WHERE principal_did = ?`,
+            `SELECT MAX(id) AS max_id FROM relay_key_packages WHERE principal_did = ?`,
           )
           .get(did)?.max_id ?? null;
 
       return {
-        published: row !== undefined && row !== null,
-        remainingOneTimePreKeys,
-        ...(row !== undefined && row !== null ? { signedPreKeyId: row.spk_id } : {}),
-        nextOneTimePreKeyId: (maxOtkId ?? 0) + 1,
+        published: maxId !== null,
+        remainingKeyPackages,
+        nextKeyPackageId: (maxId ?? 0) + 1,
       };
     },
 
-    appendOneTimePreKeys(did: string, oneTimePreKeys: OneTimePreKey[]): number {
-      const bundle = db.query(`SELECT 1 FROM prekey_bundles WHERE principal_did = ?`).get(did);
-      if (bundle === undefined || bundle === null) {
-        throw new Error("prekey bundle not published");
+    appendKeyPackages(did: string, keyPackages: Uint8Array[], nowMs: number): number {
+      const status = this.getKeyPackagePoolStatus(did);
+      if (!status.published) {
+        throw new Error("key package pool not published");
       }
-      if (oneTimePreKeys.length === 0) {
-        return this.getPreKeyBundleStatus(did).remainingOneTimePreKeys;
-      }
-
-      const status = this.getPreKeyBundleStatus(did);
-      let expectedId = status.nextOneTimePreKeyId;
-      for (const otk of oneTimePreKeys) {
-        if (otk.keyId !== expectedId) {
-          throw new Error(`oneTimePreKeys: expected keyId ${expectedId}, got ${otk.keyId}`);
-        }
-        expectedId += 1;
+      if (keyPackages.length === 0) {
+        return status.remainingKeyPackages;
       }
 
       db.run("BEGIN");
       try {
-        const insertOtk = db.prepare(
-          `INSERT INTO prekey_otks (principal_did, otk_id, otk_pub, claimed) VALUES (?, ?, ?, 0)`,
+        const insert = db.prepare(
+          `INSERT INTO relay_key_packages (principal_did, key_package, claimed, created_ms)
+           VALUES (?, ?, 0, ?)`,
         );
-        for (const otk of oneTimePreKeys) {
-          insertOtk.run(did, otk.keyId, otk.publicKey);
+        for (const kp of keyPackages) {
+          insert.run(did, kp, nowMs);
         }
         db.run("COMMIT");
       } catch (e) {
@@ -530,69 +512,94 @@ export function createChannelRegistry(db: Database) {
         throw e;
       }
 
-      return status.remainingOneTimePreKeys + oneTimePreKeys.length;
+      return status.remainingKeyPackages + keyPackages.length;
     },
 
-    fetchPreKeyBundle(did: string): PreKeyFetchResult | undefined {
-      const row = db
-        .query<
-          {
-            identity_key: string;
-            spk_id: number;
-            spk_pub: string;
-            spk_sig: string;
-          },
-          [string]
-        >(
-          `SELECT identity_key, spk_id, spk_pub, spk_sig FROM prekey_bundles WHERE principal_did = ?`,
-        )
-        .get(did);
-      if (row === undefined || row === null) return undefined;
-
+    fetchKeyPackage(did: string): KeyPackageFetchResult | undefined {
       db.run("BEGIN IMMEDIATE");
       try {
         const remainingBefore =
           db
             .query<{ n: number }, [string]>(
-              `SELECT COUNT(*) AS n FROM prekey_otks WHERE principal_did = ? AND claimed = 0`,
+              `SELECT COUNT(*) AS n FROM relay_key_packages WHERE principal_did = ? AND claimed = 0`,
             )
             .get(did)?.n ?? 0;
 
-        const otk = db
-          .query<{ id: number; otk_id: number; otk_pub: string }, [string]>(
-            `SELECT id, otk_id, otk_pub FROM prekey_otks
+        if (remainingBefore === 0) return undefined;
+
+        const row = db
+          .query<{ id: number; key_package: Uint8Array }, [string]>(
+            `SELECT id, key_package FROM relay_key_packages
              WHERE principal_did = ? AND claimed = 0
              ORDER BY id ASC LIMIT 1`,
           )
           .get(did);
 
-        const bundle: PreKeyBundle = {
-          did,
-          identityKey: row.identity_key,
-          signedPreKey: {
-            keyId: row.spk_id,
-            publicKey: row.spk_pub,
-            signature: row.spk_sig,
-          },
-        };
-
-        let oneTimePreKeyClaimed = false;
-        if (otk !== undefined && otk !== null) {
-          db.run(`UPDATE prekey_otks SET claimed = 1 WHERE id = ?`, [otk.id]);
-          bundle.oneTimePreKey = { keyId: otk.otk_id, publicKey: otk.otk_pub };
-          oneTimePreKeyClaimed = true;
+        if (row === undefined || row === null) {
+          db.run("COMMIT");
+          return undefined;
         }
 
-        const remainingOneTimePreKeys = oneTimePreKeyClaimed
-          ? remainingBefore - 1
-          : remainingBefore;
-
+        db.run(`UPDATE relay_key_packages SET claimed = 1 WHERE id = ?`, [row.id]);
+        const remainingKeyPackages = remainingBefore - 1;
         db.run("COMMIT");
-        return { bundle, remainingOneTimePreKeys, oneTimePreKeyClaimed };
+        return {
+          keyPackage: row.key_package,
+          remainingKeyPackages,
+          keyPackageClaimed: true,
+        };
       } catch (e) {
         db.run("ROLLBACK");
         throw e;
       }
+    },
+
+    publishMlsWelcome(input: {
+      channelId: string;
+      sessionId: string;
+      publisherDid: string;
+      welcome: Uint8Array;
+      nowMs: number;
+    }): void {
+      db.run(
+        `INSERT INTO relay_mls_welcomes (channel_id, session_id, publisher_did, welcome, created_ms)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(channel_id, session_id) DO UPDATE SET
+           publisher_did = excluded.publisher_did,
+           welcome = excluded.welcome,
+           created_ms = excluded.created_ms`,
+        [input.channelId, input.sessionId, input.publisherDid, input.welcome, input.nowMs],
+      );
+    },
+
+    fetchMlsWelcome(channelId: string, sessionId: string): Uint8Array | undefined {
+      const row = db
+        .query<{ welcome: Uint8Array }, [string, string]>(
+          `SELECT welcome FROM relay_mls_welcomes WHERE channel_id = ? AND session_id = ?`,
+        )
+        .get(channelId, sessionId);
+      return row?.welcome;
+    },
+
+    getSessionParties(
+      channelId: string,
+      sessionId: string,
+    ): { partyA: string; partyB: string; initiatorDid: string } | undefined {
+      const row = db
+        .query<
+          { party_a_did: string; party_b_did: string; initiator_did: string | null },
+          [string, string]
+        >(
+          `SELECT party_a_did, party_b_did, initiator_did FROM channel_sessions
+           WHERE channel_id = ? AND session_id = ? AND status = 'active'`,
+        )
+        .get(channelId, sessionId);
+      if (row === undefined || row === null) return undefined;
+      return {
+        partyA: row.party_a_did,
+        partyB: row.party_b_did,
+        initiatorDid: row.initiator_did ?? row.party_a_did,
+      };
     },
   };
 }

@@ -19,14 +19,6 @@ import {
   type RelaySigner,
   type RosterSnapshot,
 } from "@khoralabs/relay-contracts";
-import {
-  type AppendOneTimePreKeysBody,
-  type PreKeyBundle,
-  type PreKeyBundleStatus,
-  type PublishPreKeyBundleBody,
-  parsePreKeyBundle,
-  parsePreKeyBundleStatus,
-} from "@khoralabs/relay-crypto";
 
 import { signedAgentFetch } from "./agent-sign";
 
@@ -194,73 +186,4 @@ export async function getRosterHttp(
   const j: unknown = await res.json().catch(() => null);
   if (!res.ok) throw new Error(httpError(res.statusText, j));
   return parseRosterSnapshot(j);
-}
-
-export async function publishPreKeysHttp(
-  relayBaseUrl: string,
-  signer: RelaySigner,
-  body: PublishPreKeyBundleBody,
-): Promise<{ ok: true }> {
-  const path = "/v1/prekeys";
-  const bodyText = JSON.stringify(body);
-  const res = await signedAgentFetch(relayBaseUrl, {
-    method: "POST",
-    path,
-    bodyText,
-    signer,
-  });
-  const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
-  return j as { ok: true };
-}
-
-export async function getPreKeyStatusHttp(
-  relayBaseUrl: string,
-  signer: RelaySigner,
-): Promise<PreKeyBundleStatus> {
-  const path = "/v1/prekeys/status";
-  const res = await signedAgentFetch(relayBaseUrl, {
-    method: "GET",
-    path,
-    bodyText: "",
-    signer,
-  });
-  const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
-  return parsePreKeyBundleStatus(j);
-}
-
-export async function appendOneTimePreKeysHttp(
-  relayBaseUrl: string,
-  signer: RelaySigner,
-  body: AppendOneTimePreKeysBody,
-): Promise<{ ok: true; remainingOneTimePreKeys: number }> {
-  const path = "/v1/prekeys/otks";
-  const bodyText = JSON.stringify(body);
-  const res = await signedAgentFetch(relayBaseUrl, {
-    method: "POST",
-    path,
-    bodyText,
-    signer,
-  });
-  const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
-  return j as { ok: true; remainingOneTimePreKeys: number };
-}
-
-export async function fetchPreKeysHttp(
-  relayBaseUrl: string,
-  signer: RelaySigner,
-  did: string,
-): Promise<PreKeyBundle> {
-  const path = `/v1/prekeys/${encodeURIComponent(did)}`;
-  const res = await signedAgentFetch(relayBaseUrl, {
-    method: "GET",
-    path,
-    bodyText: "",
-    signer,
-  });
-  const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
-  return parsePreKeyBundle(j);
 }

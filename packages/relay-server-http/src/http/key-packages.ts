@@ -1,7 +1,8 @@
 import {
-  parseAppendOneTimePreKeysBody,
-  parsePublishPreKeyBundleBody,
-} from "@khoralabs/relay-crypto";
+  parseAppendKeyPackagesBody,
+  parsePublishKeyPackagesBody,
+} from "@khoralabs/relay-contracts";
+import { base64UrlToBytes, bytesToBase64Url } from "@khoralabs/relay-crypto";
 
 import { jsonError } from "../responses";
 import type { RelayHttpDeps } from "./deps";
@@ -12,18 +13,18 @@ import {
   requireAuthedDid,
 } from "./request";
 
-export const RELAY_PREKEY_LOW_OTK_WARN_ENV = "RELAY_PREKEY_LOW_OTK_WARN" as const;
+export const RELAY_KEY_PACKAGE_LOW_WARN_ENV = "RELAY_KEY_PACKAGE_LOW_WARN" as const;
 
-const DEFAULT_LOW_OTK_WARN_THRESHOLD = 5;
+const DEFAULT_LOW_WARN_THRESHOLD = 5;
 
-export function prekeyLowOtkWarnThreshold(env: NodeJS.ProcessEnv = process.env): number {
-  const raw = env[RELAY_PREKEY_LOW_OTK_WARN_ENV]?.trim();
-  if (raw === undefined || raw.length === 0) return DEFAULT_LOW_OTK_WARN_THRESHOLD;
+export function keyPackageLowWarnThreshold(env: NodeJS.ProcessEnv = process.env): number {
+  const raw = env[RELAY_KEY_PACKAGE_LOW_WARN_ENV]?.trim();
+  if (raw === undefined || raw.length === 0) return DEFAULT_LOW_WARN_THRESHOLD;
   const n = Number.parseInt(raw, 10);
-  return Number.isFinite(n) && n >= 0 ? n : DEFAULT_LOW_OTK_WARN_THRESHOLD;
+  return Number.isFinite(n) && n >= 0 ? n : DEFAULT_LOW_WARN_THRESHOLD;
 }
 
-export async function handlePublishPreKeys(
+export async function handlePublishKeyPackages(
   deps: RelayHttpDeps,
   req: Request,
   url: URL,
@@ -39,19 +40,20 @@ export async function handlePublishPreKeys(
   if (authed instanceof Response) return authed;
   const { did } = authed;
 
-  let body: ReturnType<typeof parsePublishPreKeyBundleBody>;
+  let body: ReturnType<typeof parsePublishKeyPackagesBody>;
   try {
-    body = parsePublishPreKeyBundleBody(JSON.parse(bodyText) as unknown);
+    body = parsePublishKeyPackagesBody(JSON.parse(bodyText) as unknown);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return jsonError(msg, 400);
   }
 
-  deps.registry.publishPreKeyBundle(did, body, deps.now());
+  const keyPackages = body.keyPackages.map((b64) => base64UrlToBytes(b64));
+  deps.registry.publishKeyPackages(did, keyPackages, deps.now());
   return Response.json({ ok: true as const });
 }
 
-export async function handleFetchPreKeys(
+export async function handleFetchKeyPackage(
   deps: RelayHttpDeps,
   req: Request,
   url: URL,
@@ -65,36 +67,36 @@ export async function handleFetchPreKeys(
   if (authed instanceof Response) return authed;
   const { did: requesterDid } = authed;
 
-  const didCheck = await checkRateLimitResponse(deps.rateLimiters.prekeysFetchDid, requesterDid);
+  const didCheck = await checkRateLimitResponse(deps.rateLimiters.keyPackageFetchDid, requesterDid);
   if (didCheck !== undefined) return didCheck;
 
-  const result = deps.registry.fetchPreKeyBundle(targetDid);
+  const result = deps.registry.fetchKeyPackage(targetDid);
   if (result === undefined) {
-    return jsonError("prekey bundle not found", 404);
+    return jsonError("key package not found", 404);
   }
 
-  const { bundle, remainingOneTimePreKeys, oneTimePreKeyClaimed } = result;
-  const oneTimePreKeyDepleted = !oneTimePreKeyClaimed;
-  const lowThreshold = prekeyLowOtkWarnThreshold();
+  const { keyPackage, remainingKeyPackages, keyPackageClaimed } = result;
+  const keyPackageDepleted = !keyPackageClaimed;
+  const lowThreshold = keyPackageLowWarnThreshold();
 
-  if (oneTimePreKeyDepleted) {
+  if (keyPackageDepleted) {
     console.warn(
-      `[relay] prekey fetch for ${targetDid} returned no one-time prekey (remaining=0); X3DH will use SPK-only path; requester=${requesterDid}`,
+      `[relay] key package fetch for ${targetDid} returned empty pool; requester=${requesterDid}`,
     );
-  } else if (remainingOneTimePreKeys <= lowThreshold) {
+  } else if (remainingKeyPackages <= lowThreshold) {
     console.warn(
-      `[relay] prekey one-time prekeys low for ${targetDid}: ${remainingOneTimePreKeys} remaining after claim; requester=${requesterDid}`,
+      `[relay] key packages low for ${targetDid}: ${remainingKeyPackages} remaining; requester=${requesterDid}`,
     );
   }
 
   return Response.json({
-    ...bundle,
-    remainingOneTimePreKeys,
-    oneTimePreKeyDepleted,
+    keyPackage: bytesToBase64Url(keyPackage),
+    remainingKeyPackages,
+    keyPackageDepleted,
   });
 }
 
-export async function handlePreKeyStatus(
+export async function handleKeyPackageStatus(
   deps: RelayHttpDeps,
   req: Request,
   url: URL,
@@ -107,10 +109,10 @@ export async function handlePreKeyStatus(
   if (authed instanceof Response) return authed;
   const { did } = authed;
 
-  return Response.json(deps.registry.getPreKeyBundleStatus(did));
+  return Response.json(deps.registry.getKeyPackagePoolStatus(did));
 }
 
-export async function handleAppendOneTimePreKeys(
+export async function handleAppendKeyPackages(
   deps: RelayHttpDeps,
   req: Request,
   url: URL,
@@ -126,20 +128,21 @@ export async function handleAppendOneTimePreKeys(
   if (authed instanceof Response) return authed;
   const { did } = authed;
 
-  let body: ReturnType<typeof parseAppendOneTimePreKeysBody>;
+  let body: ReturnType<typeof parseAppendKeyPackagesBody>;
   try {
-    body = parseAppendOneTimePreKeysBody(JSON.parse(bodyText) as unknown);
+    body = parseAppendKeyPackagesBody(JSON.parse(bodyText) as unknown);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return jsonError(msg, 400);
   }
 
   try {
-    const remainingOneTimePreKeys = deps.registry.appendOneTimePreKeys(did, body.oneTimePreKeys);
-    return Response.json({ ok: true as const, remainingOneTimePreKeys });
+    const keyPackages = body.keyPackages.map((b64) => base64UrlToBytes(b64));
+    const remainingKeyPackages = deps.registry.appendKeyPackages(did, keyPackages, deps.now());
+    return Response.json({ ok: true as const, remainingKeyPackages });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg === "prekey bundle not published") {
+    if (msg === "key package pool not published") {
       return jsonError(msg, 404);
     }
     return jsonError(msg, 400);

@@ -28,6 +28,7 @@ export function ensureChannelRegistrySchema(db: Database): void {
       channel_id TEXT NOT NULL REFERENCES channels(channel_id) ON DELETE CASCADE,
       party_a_did TEXT NOT NULL,
       party_b_did TEXT NOT NULL,
+      initiator_did TEXT,
       status TEXT NOT NULL CHECK(status IN ('active', 'released')),
       created_at_ms INTEGER NOT NULL,
       PRIMARY KEY (channel_id, session_id)
@@ -68,24 +69,37 @@ export function ensureChannelRegistrySchema(db: Database): void {
         REFERENCES channel_members(channel_id, principal_did) ON DELETE CASCADE
     );
 
-    CREATE TABLE IF NOT EXISTS prekey_bundles (
-      principal_did TEXT PRIMARY KEY,
-      identity_key TEXT NOT NULL,
-      spk_id INTEGER NOT NULL,
-      spk_pub TEXT NOT NULL,
-      spk_sig TEXT NOT NULL,
-      published_at_ms INTEGER NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS prekey_otks (
+    CREATE TABLE IF NOT EXISTS relay_key_packages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       principal_did TEXT NOT NULL,
-      otk_id INTEGER NOT NULL,
-      otk_pub TEXT NOT NULL,
-      claimed INTEGER NOT NULL DEFAULT 0
+      key_package BLOB NOT NULL,
+      claimed INTEGER NOT NULL DEFAULT 0,
+      created_ms INTEGER NOT NULL
     );
 
-    CREATE INDEX IF NOT EXISTS idx_prekey_otks_principal
-      ON prekey_otks (principal_did, claimed);
+    CREATE INDEX IF NOT EXISTS idx_relay_key_packages_principal
+      ON relay_key_packages (principal_did, claimed);
+
   `);
+
+  migrateChannelSessionsInitiatorDid(db);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS relay_mls_welcomes (
+      channel_id TEXT NOT NULL,
+      session_id TEXT NOT NULL,
+      publisher_did TEXT NOT NULL,
+      welcome BLOB NOT NULL,
+      created_ms INTEGER NOT NULL,
+      PRIMARY KEY (channel_id, session_id)
+    );
+  `);
+}
+
+/** Add initiator_did for MLS welcome publish auth (allocate caller, not sorted party_a). */
+function migrateChannelSessionsInitiatorDid(db: Database): void {
+  const columns = db.query<{ name: string }, []>("PRAGMA table_info(channel_sessions)").all();
+  if (!columns.some((c) => c.name === "initiator_did")) {
+    db.run("ALTER TABLE channel_sessions ADD COLUMN initiator_did TEXT");
+  }
 }

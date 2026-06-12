@@ -59,6 +59,14 @@ All mutating HTTP endpoints require a DID-signed request envelope. Hosts **must*
 
 **Multiple instances behind a load balancer** must set `RELAY_REDIS_URL` so nonce replay protection and HTTP rate limits share state across pods. Without Redis, a captured signed request can be replayed against a different instance, and per-DID/IP limits reset per process. SQLite on separate DB files per pod does **not** coordinate across instances.
 
-**Prekey fetch** (`GET /v1/prekeys/:did`) requires DID-signed auth and per-requester rate limits. Each successful fetch claims one one-time prekey; responses include `remainingOneTimePreKeys` and `oneTimePreKeyDepleted` when the SPK-only X3DH path applies. The relay cannot mint keys — hosts should run `@khoralabs/relay-client` `PreKeyManager` (or equivalent) to poll `GET /v1/prekeys/status` and append OTKs via `POST /v1/prekeys/otks` before the pool is exhausted.
+**MLS KeyPackage fetch** (`GET /v1/key-packages/:did`) requires DID-signed auth and per-requester rate limits. Each successful fetch claims one KeyPackage from the peer's pool. The relay cannot mint keys — hosts should run `@khoralabs/relay-mls` `KeyPackageManager` (via `RelayClient.createKeyPackageManager`) to poll `GET /v1/key-packages/status` and append packages via `POST /v1/key-packages/batch` before the pool is depleted.
+
+**MLS Welcome store** (`POST/GET .../sessions/:id/mls-welcome`) holds opaque Welcome blobs for bilateral session bootstrap. Only the session initiator may publish; session parties may fetch.
+
+**Two client APIs (no in-band negotiation):** `MlsChannelConnection` always MLS (`mls1` envelopes); `connectRelay` always plaintext. Callers pick the API for their trust context.
+
+**MLS group state at rest:** Persisted MLS group bytes (`encodeGroupState`) contain ratchet secrets. Use `createEncryptingMlsStatePersistence` or `createFileMlsStatePersistence` with `RELAY_MLS_GROUP_STATE_ENCRYPTION_KEY` (32-byte hex or base64url in production). Plain `MemoryMlsStatePersistence` is for tests only.
+
+**MLS KeyPackage private halves:** `KeyPackageManager` persists private state through the same encrypted `MlsStatePersistenceAdapter` when configured. A local last-resort KeyPackage is kept and re-appended to the relay pool when depleted so joins can proceed after restart.
 
 IP-based rate limits use the socket peer address by default. Set `RELAY_TRUSTED_PROXY=1` only when the relay sits behind a trusted reverse proxy or load balancer that strips client-supplied forwarding headers and appends the real client IP. Without this flag, `X-Forwarded-For` and `X-Real-IP` are ignored so clients cannot spoof their IP to evade limits.

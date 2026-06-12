@@ -56,6 +56,7 @@
       "dependencies": {
         "@khoralabs/relay-contracts": "workspace:*",
         "@khoralabs/relay-crypto": "workspace:*",
+        "@khoralabs/relay-mls": "workspace:*",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -97,6 +98,25 @@
         "typescript": "^5",
       },
     },
+    "packages/relay-mls": {
+      "name": "@khoralabs/relay-mls",
+      "version": "0.0.0",
+      "dependencies": {
+        "@hpke/core": "^1.9.0",
+        "@khoralabs/relay-contracts": "workspace:*",
+        "@khoralabs/relay-crypto": "workspace:*",
+        "@noble/ed25519": "^3.1.0",
+        "@noble/hashes": "^2.2.0",
+        "ts-mls": "^1.6.2",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "typescript": "^5",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
     "packages/relay-server-http": {
       "name": "@khoralabs/relay-server-http",
       "version": "0.0.0",
@@ -106,9 +126,11 @@
         "@khoralabs/relay-crypto": "workspace:*",
         "@khoralabs/sqlite-crypto": "^0.1.0",
         "@noble/ed25519": "^3.1.0",
+        "ts-mls": "^1.6.2",
       },
       "devDependencies": {
         "@khoralabs/relay-client": "workspace:*",
+        "@khoralabs/relay-mls": "workspace:*",
         "@types/bun": "latest",
         "typescript": "^5",
       },
@@ -136,6 +158,10 @@
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.4.16", "", { "os": "win32", "cpu": "x64" }, "sha512-Kp85jgoBHa05gix6UIRjfCDiUV3w/8VIdZ247VyyO2gEjaw12WEVhdIjlxp/AMzXxqxQwbxNTDVZ3Mwd2RG5rw=="],
 
+    "@hpke/common": ["@hpke/common@1.10.1", "", {}, "sha512-moJwhmtLtuxiUzzNp1jpfBfx8yefKoO9D/RCR9dmwrnc7qjJqId1rEtQz+lSlU5cabX8daToMSx/7HayXOiaFw=="],
+
+    "@hpke/core": ["@hpke/core@1.9.0", "", { "dependencies": { "@hpke/common": "^1.10.0" } }, "sha512-pFxWl1nNJeQCSUFs7+GAblHvXBCjn9EPN65vdKlYQil2aURaRxfGMO6vBKGqm1YHTKwiAxJQNEI70PbSowMP9Q=="],
+
     "@khoralabs/relay-admission": ["@khoralabs/relay-admission@workspace:packages/relay-admission"],
 
     "@khoralabs/relay-client": ["@khoralabs/relay-client@workspace:packages/relay-client"],
@@ -144,11 +170,15 @@
 
     "@khoralabs/relay-crypto": ["@khoralabs/relay-crypto@workspace:packages/relay-crypto"],
 
+    "@khoralabs/relay-mls": ["@khoralabs/relay-mls@workspace:packages/relay-mls"],
+
     "@khoralabs/relay-server": ["@khoralabs/relay-server@workspace:apps/relay-server"],
 
     "@khoralabs/relay-server-http": ["@khoralabs/relay-server-http@workspace:packages/relay-server-http"],
 
     "@khoralabs/sqlite-crypto": ["@khoralabs/sqlite-crypto@0.1.0", "", {}, "sha512-HTpnQtwaPQDD0J5fwk9w8o47cs1HrhTBYEL5SKUlEMuvUdcqC/JgEZzwMqeT7wIZQLPdrBuPoHJMyrAkyVJGDw=="],
+
+    "@noble/ciphers": ["@noble/ciphers@2.1.1", "", {}, "sha512-bysYuiVfhxNJuldNXlFEitTVdNnYUc+XNJZd7Qm2a5j1vZHgY+fazadNFWFaMK/2vye0JVlxV3gHmC0WDfAOQw=="],
 
     "@noble/curves": ["@noble/curves@2.2.0", "", { "dependencies": { "@noble/hashes": "2.2.0" } }, "sha512-T/BoHgFXirb0ENSPBquzX0rcjXeM6Lo892a2jlYJkqk83LqZx0l1Of7DzlKJ6jkpvMrkHSnAcgb5JegL8SeIkQ=="],
 
@@ -178,8 +208,12 @@
 
     "parse-gitignore": ["parse-gitignore@2.0.0", "", {}, "sha512-RmVuCHWsfu0QPNW+mraxh/xjQVw/lhUCUru8Zni3Ctq3AoMhpDTq0OVdKS6iesd6Kqb7viCV3isAL43dciOSog=="],
 
+    "ts-mls": ["ts-mls@1.6.2", "", { "dependencies": { "@hpke/core": "1.8.0" }, "peerDependencies": { "@hpke/chacha20poly1305": "1.7.1", "@hpke/dhkem-x448": "1.7.0", "@hpke/hybridkem-x-wing": "0.6.1", "@hpke/ml-kem": "0.2.1", "@noble/ciphers": "2.1.1", "@noble/curves": "2.0.1", "@noble/post-quantum": "0.5.2" }, "optionalPeers": ["@hpke/chacha20poly1305", "@hpke/dhkem-x448", "@hpke/hybridkem-x-wing", "@hpke/ml-kem", "@noble/curves", "@noble/post-quantum"] }, "sha512-Li0Ow/IkcV3x2Jk9zi7QaQlqPIegOFUtM1mfBvvJdCysU/byifYFKWpCkKfKpu2wRa9/RH8MaT+rq/JSheUYTQ=="],
+
     "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "undici-types": ["undici-types@7.24.6", "", {}, "sha512-WRNW+sJgj5OBN4/0JpHFqtqzhpbnV0GuB+OozA9gCL7a993SmU+1JBZCzLNxYsbMfIeDL+lTsphD5jN5N+n0zg=="],
+
+    "ts-mls/@hpke/core": ["@hpke/core@1.8.0", "", { "dependencies": { "@hpke/common": "^1.9.0" } }, "sha512-yHuo+2q4HSPUFuxcg87Kiy7QZRk4IeR+cwBB0qW8fHnr71bnRCArM39Cq1bWHBt75gTyeERGD/v1H14yPB2wyw=="],
   }
 }

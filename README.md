@@ -9,7 +9,8 @@ The relay provides a generic, deployable hub for opaque encrypted byte streams a
 | Package | Description |
 |---|---|
 | `packages/relay-contracts` | Shared TypeScript types for auth wire, channels, sessions, and roster |
-| `packages/relay-crypto` | DID utilities, X3DH key exchange, prekeys, and ed25519 signing |
+| `packages/relay-crypto` | DID utilities, encoding, ed25519 signing, pairing-secret cipher |
+| `packages/relay-mls` | MLS groups, KeyPackage pool client, `MlsChannelConnection` |
 | `packages/relay-server-http` | Bun HTTP + WebSocket relay server library (channel management, HMAC tickets, DID auth) |
 | `packages/relay-client` | TypeScript client SDK for connecting to a relay and managing sessions |
 

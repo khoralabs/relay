@@ -5,24 +5,26 @@ import { handleChannelsInviteJoin } from "./channels-join";
 import type { RelayHttpDeps } from "./deps";
 import { handleChannelMintJoinToken } from "./join-tokens";
 import {
+  handleAppendKeyPackages,
+  handleFetchKeyPackage,
+  handleKeyPackageStatus,
+  handlePublishKeyPackages,
+} from "./key-packages";
+import { handleFetchMlsWelcome, handlePublishMlsWelcome } from "./mls-welcome";
+import {
   channelActorPathRe,
   channelAllocatePathRe,
   channelJoinTokensPathRe,
+  channelMlsWelcomePathRe,
   channelReleasePathRe,
   channelRosterPathRe,
   channelSessionStatusPathRe,
   channelTicketPathRe,
   channelWsNoncePathRe,
   channelWsPathRe,
-  prekeyDidPathRe,
-  prekeysPathRe,
+  keyPackageDidPathRe,
+  keyPackagesPathRe,
 } from "./paths";
-import {
-  handleAppendOneTimePreKeys,
-  handleFetchPreKeys,
-  handlePreKeyStatus,
-  handlePublishPreKeys,
-} from "./prekeys";
 import { handleGetRoster, handleRegisterActor } from "./roster";
 import { handleSessionAllocate, handleSessionRelease, handleSessionStatus } from "./sessions";
 import { handleChannelMintTicket } from "./ticket";
@@ -80,6 +82,18 @@ export async function routeRelayHttp(
     );
   }
 
+  const mlsWelcomeMatch = channelMlsWelcomePathRe.exec(url.pathname);
+  if (mlsWelcomeMatch !== null) {
+    const channelId = mlsWelcomeMatch[1] as string;
+    const sessionId = mlsWelcomeMatch[2] as string;
+    if (req.method === "POST") {
+      return handlePublishMlsWelcome(deps, req, url, channelId, sessionId, server);
+    }
+    if (req.method === "GET") {
+      return handleFetchMlsWelcome(deps, req, url, channelId, sessionId, server);
+    }
+  }
+
   const ticketMatch = channelTicketPathRe.exec(url.pathname);
   if (req.method === "POST" && ticketMatch !== null) {
     return handleChannelMintTicket(deps, req, url, ticketMatch[1] as string, server);
@@ -105,25 +119,25 @@ export async function routeRelayHttp(
     return handleGetRoster(deps, req, url, rosterMatch[1] as string, server);
   }
 
-  if (req.method === "GET" && url.pathname === "/v1/prekeys/status") {
-    return handlePreKeyStatus(deps, req, url, server);
+  if (req.method === "GET" && url.pathname === "/v1/key-packages/status") {
+    return handleKeyPackageStatus(deps, req, url, server);
   }
 
-  if (req.method === "POST" && url.pathname === "/v1/prekeys/otks") {
-    return handleAppendOneTimePreKeys(deps, req, url, server);
+  if (req.method === "POST" && url.pathname === "/v1/key-packages/batch") {
+    return handleAppendKeyPackages(deps, req, url, server);
   }
 
-  if (req.method === "POST" && prekeysPathRe.test(url.pathname)) {
-    return handlePublishPreKeys(deps, req, url, server);
+  if (req.method === "POST" && keyPackagesPathRe.test(url.pathname)) {
+    return handlePublishKeyPackages(deps, req, url, server);
   }
 
-  const prekeyDidMatch = prekeyDidPathRe.exec(url.pathname);
-  if (req.method === "GET" && prekeyDidMatch !== null) {
-    return handleFetchPreKeys(
+  const keyPackageDidMatch = keyPackageDidPathRe.exec(url.pathname);
+  if (req.method === "GET" && keyPackageDidMatch !== null) {
+    return handleFetchKeyPackage(
       deps,
       req,
       url,
-      decodeURIComponent(prekeyDidMatch[1] as string),
+      decodeURIComponent(keyPackageDidMatch[1] as string),
       server,
     );
   }

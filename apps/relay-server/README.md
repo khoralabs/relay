@@ -35,8 +35,8 @@ Default port: **8790** (override with `PORT`).
 | `RELAY_REDIS_URL` | Redis URL for shared nonce/rate-limit state (required multi-instance) | — |
 | `RELAY_REDIS_PREFIX` | Key prefix for Redis state | `relay` |
 | `RELAY_TRUSTED_PROXY` | Honor `X-Forwarded-For` / `X-Real-IP` for IP rate limits (behind LB) | unset (use socket peer only) |
-| `RELAY_RL_PREKEYS_FETCH_PER_MIN_PER_DID` | Per-requester DID rate limit for prekey fetch | `30` |
-| `RELAY_PREKEY_LOW_OTK_WARN` | Log warning when remaining OTK count is at or below this | `5` |
+| `RELAY_RL_KEY_PACKAGES_FETCH_PER_MIN_PER_DID` | Per-requester DID rate limit for KeyPackage fetch | `30` |
+| `RELAY_KEY_PACKAGE_LOW_WARN` | Log warning when remaining KeyPackage count is at or below this | `5` |
 | `RELAY_WS_ALLOWED_ORIGINS` | Comma-separated browser origins allowed on WS upgrade (e.g. `https://app.example.com`) | unset (any present `Origin` rejected) |
 | `RELAY_WS_ALLOW_MISSING_ORIGIN` | Allow WS upgrades with no `Origin` header (headless agents) | `true` |
 
