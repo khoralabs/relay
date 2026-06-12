@@ -4,6 +4,7 @@ import type { RelayRateLimiters } from "../rate-limit-buckets";
 import type { ChannelRegistry } from "../registry";
 import type { RelayProfile } from "../relay-config";
 import type { RelayHub } from "../relay-hub";
+import type { WsOriginPolicy } from "../ws-origin-policy";
 
 export type RelayHttpDeps = {
   hub: RelayHub;
@@ -15,4 +16,5 @@ export type RelayHttpDeps = {
   now: () => number;
   trustedProxy: boolean;
   clientIp(req: Request, server?: Bun.Server<unknown>): string;
+  wsOriginPolicy: WsOriginPolicy;
 };

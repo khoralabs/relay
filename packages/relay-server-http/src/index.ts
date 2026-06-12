@@ -93,3 +93,10 @@ export {
   MAX_RELAY_WS_FRAME_BYTES,
 } from "./relay-ws-limits";
 export { createSqliteNonceStore } from "./sqlite-nonce-store";
+export {
+  checkWsUpgradeOrigin,
+  RELAY_WS_ALLOW_MISSING_ORIGIN_ENV,
+  RELAY_WS_ALLOWED_ORIGINS_ENV,
+  type WsOriginPolicy,
+  wsOriginPolicyFromEnv,
+} from "./ws-origin-policy";

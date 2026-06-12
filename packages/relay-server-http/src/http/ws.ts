@@ -3,6 +3,7 @@ import { relayWsUpgradeProtocol } from "@khoralabs/relay-contracts";
 
 import type { RelayHubWsData } from "../relay-hub";
 import { jsonError } from "../responses";
+import { checkWsUpgradeOrigin } from "../ws-origin-policy";
 import { resolveChannelId } from "./channel-id";
 import type { RelayHttpDeps } from "./deps";
 import { checkDefaultIpRateLimit } from "./request";
@@ -16,6 +17,10 @@ export async function handleChannelWsUpgrade(
 ): Promise<Response | undefined> {
   const ipCheck = await checkDefaultIpRateLimit(deps, req, server);
   if (ipCheck !== undefined) return ipCheck;
+
+  if (!checkWsUpgradeOrigin(req, deps.wsOriginPolicy)) {
+    return jsonError("WebSocket origin not allowed", 403);
+  }
 
   const channelId = resolveChannelId(deps, channelIdRaw);
   if (channelId instanceof Response) return channelId;

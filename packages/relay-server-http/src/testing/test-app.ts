@@ -14,10 +14,14 @@ import {
 import { envRelayMaxChannels } from "../relay-env";
 import { createRelayHub } from "../relay-hub";
 
+import type { WsOriginPolicy } from "../ws-origin-policy";
+
 export async function createTestRelayApp(opts?: {
   relayProfile?: RelayProfile;
   singleBootstrap?: SingleChannelConfig;
   dbPath?: string;
+  env?: NodeJS.ProcessEnv;
+  wsOriginPolicy?: WsOriginPolicy;
 }): Promise<{
   app: RelayApp;
   db: Database;
@@ -55,6 +59,8 @@ export async function createTestRelayApp(opts?: {
     spool: stores.spool,
     db,
     relayProfile,
+    env: opts?.env,
+    wsOriginPolicy: opts?.wsOriginPolicy,
   });
 
   return {

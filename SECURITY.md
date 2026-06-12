@@ -37,9 +37,19 @@ Anyone with **both** the database file and the field encryption key can still mi
 
 ### WebSocket admission
 
-The relay WebSocket upgrade handler verifies HMAC tickets but does **not** enforce `Origin`, TLS, or rate limits by default. Browser-facing relays **must** configure `allowedOrigins` — ticket-only admission does not prevent cross-site WebSocket CSRF. Use TLS termination when upgrades are served over HTTPS.
+WebSocket connections require a **one-time upgrade nonce** minted by an authorized channel member via DID-signed HTTP (`POST /v1/channels/:id/ws-nonce`). The nonce is consumed on upgrade; replay with the same nonce fails. Nonce TTL is fixed by the registry (default 60s).
 
-Hub tickets are **reusable until channel expiry** unless admission policy enables `singleUseTickets`, `ticketTtlMs`, or `rotateOnMint`. Treat stolen tickets as valid for the remaining window; use short TTLs or one-time nonces when admission must not be replayable.
+After a successful upgrade, the hub issues an HMAC **channel ticket** bound to the channel pairing secret. That ticket is **reusable until the channel `expiresAtMs`** — there is no per-ticket TTL or single-use rotation today. Treat stolen tickets as valid for the remaining channel lifetime.
+
+**Origin policy** (cross-site WebSocket hijacking):
+
+- `RELAY_WS_ALLOW_MISSING_ORIGIN` — default `true`. Headless agents and `relay-client` typically send **no `Origin` header**; they continue to work with zero configuration.
+- `RELAY_WS_ALLOWED_ORIGINS` — comma-separated allowlist (e.g. `https://app.example.com`). When a browser sends `Origin`, it must match the allowlist exactly (normalized to URL origin). **Empty allowlist + present `Origin` → reject** (blocks browser CSWSH by default).
+- Browser-facing relays must list every trusted web origin explicitly. Peers do not need to coordinate origins with each other — `Origin` names the web page that opened the socket, not the peer identity.
+
+IP rate limits apply to the upgrade path. Use TLS termination when upgrades are served over HTTPS.
+
+**Not yet implemented:** admission knobs such as `singleUseTickets`, per-ticket `ticketTtlMs`, or `rotateOnMint` for hub tickets.
 
 ### DID-signed HTTP requests
 

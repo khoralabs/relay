@@ -37,6 +37,8 @@ Default port: **8790** (override with `PORT`).
 | `RELAY_TRUSTED_PROXY` | Honor `X-Forwarded-For` / `X-Real-IP` for IP rate limits (behind LB) | unset (use socket peer only) |
 | `RELAY_RL_PREKEYS_FETCH_PER_MIN_PER_DID` | Per-requester DID rate limit for prekey fetch | `30` |
 | `RELAY_PREKEY_LOW_OTK_WARN` | Log warning when remaining OTK count is at or below this | `5` |
+| `RELAY_WS_ALLOWED_ORIGINS` | Comma-separated browser origins allowed on WS upgrade (e.g. `https://app.example.com`) | unset (any present `Origin` rejected) |
+| `RELAY_WS_ALLOW_MISSING_ORIGIN` | Allow WS upgrades with no `Origin` header (headless agents) | `true` |
 
 Single-instance deployments can rely on SQLite (`RELAY_DB_PATH`) for agent-request nonce replay protection and HTTP rate limits. Behind a load balancer, set `RELAY_REDIS_URL`.
 

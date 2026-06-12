@@ -21,6 +21,7 @@ import {
   relayRedisUrlFromEnv,
 } from "./relay-redis";
 import { createRelayIngressLimiter, MAX_RELAY_WS_FRAME_BYTES } from "./relay-ws-limits";
+import { type WsOriginPolicy, wsOriginPolicyFromEnv } from "./ws-origin-policy";
 
 export { DEFAULT_CHANNEL_TTL_MS } from "./relay-config";
 
@@ -49,6 +50,7 @@ export type CreateRelayAppOptions = {
   relayProfile?: RelayProfile | undefined;
   now?: (() => number) | undefined;
   env?: NodeJS.ProcessEnv;
+  wsOriginPolicy?: WsOriginPolicy | undefined;
 };
 
 export function createRelayApp(opts: CreateRelayAppOptions): RelayApp {
@@ -70,6 +72,7 @@ export function createRelayApp(opts: CreateRelayAppOptions): RelayApp {
   const rateLimiters = opts.rateLimiters ?? createRelayRateLimiters(env, backing);
   const now = opts.now ?? (() => Date.now());
   const trustedProxy = relayTrustedProxyFromEnv(env);
+  const wsOriginPolicy = opts.wsOriginPolicy ?? wsOriginPolicyFromEnv(env);
   const clientIp = (req: Request, server?: Bun.Server<unknown>) =>
     clientIpFromRequest(req, {
       trustedProxy,
@@ -90,6 +93,7 @@ export function createRelayApp(opts: CreateRelayAppOptions): RelayApp {
     now,
     trustedProxy,
     clientIp,
+    wsOriginPolicy,
   };
 
   return {
