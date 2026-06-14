@@ -77,7 +77,7 @@ describe("channel-admission", () => {
       expiresAtMs: now + 60_000,
     });
     const raw = db
-      .query(`SELECT pairing_secret_hex FROM relay_rooms WHERE channel_id = ?`)
+      .query(`SELECT pairing_secret_hex FROM relay_channels WHERE channel_id = ?`)
       .get("enc") as { pairing_secret_hex: string };
     expect(isEncryptedPairingSecret(raw.pairing_secret_hex)).toBe(true);
     expect(raw.pairing_secret_hex).not.toBe(secretHex);

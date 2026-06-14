@@ -8,7 +8,7 @@ import {
 
 export function ensureChannelAdmissionSchema(db: Database): void {
   db.run(`
-    CREATE TABLE IF NOT EXISTS relay_rooms (
+    CREATE TABLE IF NOT EXISTS relay_channels (
       channel_id TEXT PRIMARY KEY NOT NULL,
       pairing_secret_hex TEXT NOT NULL,
       created_at_ms INTEGER NOT NULL,
@@ -23,7 +23,7 @@ export function createChannelAdmissionStore(
 ): ChannelAdmissionStore {
   ensureChannelAdmissionSchema(db);
   const upsertStmt = db.prepare(
-    `INSERT INTO relay_rooms (channel_id, pairing_secret_hex, created_at_ms, expires_at_ms)
+    `INSERT INTO relay_channels (channel_id, pairing_secret_hex, created_at_ms, expires_at_ms)
      VALUES (?, ?, ?, ?)
      ON CONFLICT(channel_id) DO UPDATE SET
        pairing_secret_hex = excluded.pairing_secret_hex,
@@ -32,10 +32,10 @@ export function createChannelAdmissionStore(
   );
   const selectStmt = db.query(
     `SELECT pairing_secret_hex, created_at_ms, expires_at_ms
-     FROM relay_rooms WHERE channel_id = ? AND expires_at_ms > ?`,
+     FROM relay_channels WHERE channel_id = ? AND expires_at_ms > ?`,
   );
-  const purgeExpiredStmt = db.prepare(`DELETE FROM relay_rooms WHERE expires_at_ms <= ?`);
-  const deleteStmt = db.prepare(`DELETE FROM relay_rooms WHERE channel_id = ?`);
+  const purgeExpiredStmt = db.prepare(`DELETE FROM relay_channels WHERE expires_at_ms <= ?`);
+  const deleteStmt = db.prepare(`DELETE FROM relay_channels WHERE channel_id = ?`);
 
   return {
     upsertChannelAdmission(record: ChannelAdmissionRecord): void {

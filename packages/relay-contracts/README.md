@@ -21,7 +21,7 @@ Relay persistence is **opaque bytes** — not OBP graph semantics. Implementatio
 
 | Port | Package | Role |
 |------|---------|------|
-| `ChannelAdmissionStore` | `@khoralabs/relay-admission` | Channel pairing secrets + TTL (`relay_rooms`) |
+| `ChannelAdmissionStore` | `@khoralabs/relay-admission` | Channel pairing secrets + TTL (`relay_channels`) |
 | `BlobSpool` | `@khoralabs/relay-server-http` | Per-channel blob replay spool (`relay_spool`) |
 | `RelayHub` | `@khoralabs/relay-server-http` | WS attach, ticket verify, fan-out, echo |
 
