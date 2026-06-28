@@ -1,4 +1,5 @@
 export {
+  type AutoReplenishOptions,
   KeyPackageManager,
   type KeyPackageManagerOptions,
   type StoredKeyPackage,

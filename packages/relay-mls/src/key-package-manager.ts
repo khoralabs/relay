@@ -16,6 +16,19 @@ import { generateDidBoundKeyPackage } from "./relay-mls-key-package";
 const DEFAULT_MIN_KEY_PACKAGES = 10;
 const DEFAULT_REPLENISH_BATCH_SIZE = 50;
 const DEFAULT_AUTO_REPLENISH_INTERVAL_MS = 60_000;
+const DEFAULT_MAX_CONSECUTIVE_FAILURES = 5;
+const DEFAULT_BACKOFF_BASE_MS = 5_000;
+
+export type AutoReplenishOptions = {
+  /** Delay between successful replenish checks. Default 60_000. */
+  intervalMs?: number;
+  /** Consecutive failures before giving up. Default 5. */
+  maxConsecutiveFailures?: number;
+  /** Base delay for exponential backoff after failures. Default 5_000. */
+  backoffBaseMs?: number;
+  /** Invoked after max consecutive failures; default calls `process.exit(1)`. */
+  onGiveUp?: (error: unknown, attempts: number) => void;
+};
 
 export type KeyPackageManagerOptions = {
   relayBaseUrl: string;
@@ -62,7 +75,13 @@ function keyPackageStoreEntryToStored(entry: KeyPackageStoreEntry): StoredKeyPac
 export class KeyPackageManager {
   private readonly minKeyPackages: number;
   private readonly replenishBatchSize: number;
-  private replenishTimer: ReturnType<typeof setInterval> | undefined;
+  private autoReplenishActive = false;
+  private autoReplenishIntervalMs = DEFAULT_AUTO_REPLENISH_INTERVAL_MS;
+  private maxConsecutiveFailures = DEFAULT_MAX_CONSECUTIVE_FAILURES;
+  private backoffBaseMs = DEFAULT_BACKOFF_BASE_MS;
+  private onGiveUp: (error: unknown, attempts: number) => void = () => process.exit(1);
+  private replenishTimeout: ReturnType<typeof setTimeout> | undefined;
+  private consecutiveFailures = 0;
   private readonly privateByPublicB64 = new Map<string, StoredKeyPackage>();
   private lastResortPublicB64: string | undefined;
   private storeLoaded = false;
@@ -91,19 +110,59 @@ export class KeyPackageManager {
     await this.appendBatch(count);
   }
 
-  startAutoReplenish(intervalMs = DEFAULT_AUTO_REPLENISH_INTERVAL_MS): void {
-    if (this.replenishTimer !== undefined) return;
-    this.replenishTimer = setInterval(() => {
-      void this.replenishIfNeeded().catch((e) => {
-        console.warn("[relay-mls] key-package auto-replenish failed:", e);
-      });
-    }, intervalMs);
+  startAutoReplenish(
+    options: number | AutoReplenishOptions = DEFAULT_AUTO_REPLENISH_INTERVAL_MS,
+  ): void {
+    if (this.autoReplenishActive) return;
+    const opts = typeof options === "number" ? { intervalMs: options } : options;
+    this.autoReplenishIntervalMs = opts.intervalMs ?? DEFAULT_AUTO_REPLENISH_INTERVAL_MS;
+    this.maxConsecutiveFailures = opts.maxConsecutiveFailures ?? DEFAULT_MAX_CONSECUTIVE_FAILURES;
+    this.backoffBaseMs = opts.backoffBaseMs ?? DEFAULT_BACKOFF_BASE_MS;
+    if (opts.onGiveUp !== undefined) this.onGiveUp = opts.onGiveUp;
+    this.autoReplenishActive = true;
+    this.consecutiveFailures = 0;
+    void this.runAutoReplenishTick();
   }
 
   stopAutoReplenish(): void {
-    if (this.replenishTimer === undefined) return;
-    clearInterval(this.replenishTimer);
-    this.replenishTimer = undefined;
+    if (!this.autoReplenishActive && this.replenishTimeout === undefined) return;
+    this.autoReplenishActive = false;
+    if (this.replenishTimeout !== undefined) {
+      clearTimeout(this.replenishTimeout);
+      this.replenishTimeout = undefined;
+    }
+  }
+
+  private scheduleNextReplenish(delayMs: number): void {
+    if (!this.autoReplenishActive) return;
+    this.replenishTimeout = setTimeout(() => {
+      this.replenishTimeout = undefined;
+      void this.runAutoReplenishTick();
+    }, delayMs);
+  }
+
+  private async runAutoReplenishTick(): Promise<void> {
+    if (!this.autoReplenishActive) return;
+    try {
+      await this.replenishIfNeeded();
+      if (!this.autoReplenishActive) return;
+      this.consecutiveFailures = 0;
+      this.scheduleNextReplenish(this.autoReplenishIntervalMs);
+    } catch (e) {
+      if (!this.autoReplenishActive) return;
+      this.consecutiveFailures++;
+      console.warn(
+        `[relay-mls] key-package auto-replenish failed (${this.consecutiveFailures}/${this.maxConsecutiveFailures}):`,
+        e,
+      );
+      if (this.consecutiveFailures >= this.maxConsecutiveFailures) {
+        this.stopAutoReplenish();
+        this.onGiveUp(e, this.consecutiveFailures);
+        return;
+      }
+      const delayMs = this.backoffBaseMs * 2 ** (this.consecutiveFailures - 1);
+      this.scheduleNextReplenish(delayMs);
+    }
   }
 
   findStoredKeyPackage(publicPackage: KeyPackage): StoredKeyPackage | undefined {
