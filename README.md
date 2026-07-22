@@ -8,12 +8,19 @@ The relay provides a generic, deployable hub for opaque encrypted byte streams a
 
 | Package | Description |
 |---|---|
-| `packages/relay-contracts` | Shared TypeScript types for auth wire, channels, sessions, roster, MLS key packages, and welcome store |
-| `packages/relay-crypto` | DID utilities, encoding, ed25519 signing, pairing-secret field encryption |
-| `packages/relay-admission` | Channel pairing secrets, HMAC tickets, and one-time WebSocket upgrade nonces |
-| `packages/relay-mls` | RFC 9420 MLS groups, KeyPackage pool client, `MlsChannelConnection`, encrypted group-state persistence |
-| `packages/relay-server-http` | Bun HTTP + WebSocket relay server library (channel management, blob spool, DID auth, rate limits) |
-| `packages/relay-client` | TypeScript client SDK for connecting to a relay and managing sessions |
+| [`packages/relay`](packages/relay) (`@khoralabs/relay`) | Unified library: client, crypto, contracts, admission, MLS, server, testing |
+
+### Entrypoints
+
+| Import | Role |
+|---|---|
+| `@khoralabs/relay` / `./client` | TypeScript client SDK |
+| `@khoralabs/relay/crypto` | DID utilities, encoding, signing, pairing-secret encryption |
+| `@khoralabs/relay/contracts` | Shared wire types |
+| `@khoralabs/relay/admission` | Pairing secrets, HMAC tickets, WS upgrade nonces |
+| `@khoralabs/relay/mls` | RFC 9420 MLS groups and KeyPackage pool |
+| `@khoralabs/relay/server` | Bun HTTP + WebSocket server library |
+| `@khoralabs/relay/testing` | Server test helpers |
 
 ## Apps
 
@@ -33,6 +40,18 @@ Run all checks before committing:
 bun run check
 bun run typecheck
 bun run test
+```
+
+### Migration from split packages
+
+```ts
+"@khoralabs/relay-client"              → "@khoralabs/relay/client" // or "@khoralabs/relay"
+"@khoralabs/relay-crypto"              → "@khoralabs/relay/crypto"
+"@khoralabs/relay-contracts"           → "@khoralabs/relay/contracts"
+"@khoralabs/relay-mls"                 → "@khoralabs/relay/mls"
+"@khoralabs/relay-admission"           → "@khoralabs/relay/admission"
+"@khoralabs/relay-server-http"         → "@khoralabs/relay/server"
+"@khoralabs/relay-server-http/testing" → "@khoralabs/relay/testing"
 ```
 
 ## Security

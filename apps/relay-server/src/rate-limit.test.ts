@@ -3,13 +3,13 @@ import {
   createInMemoryRateLimiter,
   createRelayApp,
   createRelayRateLimiters,
-} from "@khoralabs/relay-server-http";
+} from "@khoralabs/relay/server";
 import {
   createTestAgent,
   createTestRelayApp,
   signedFetch,
   signedPath,
-} from "@khoralabs/relay-server-http/testing";
+} from "@khoralabs/relay/testing";
 
 test("rate limiter returns 429", async () => {
   const limiter = createInMemoryRateLimiter({ windowMs: 60_000, max: 1 });

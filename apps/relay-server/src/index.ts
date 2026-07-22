@@ -6,7 +6,7 @@ import {
   createRelayStores,
   loadRelayProfile,
   openRelayDatabase,
-} from "@khoralabs/relay-server-http";
+} from "@khoralabs/relay/server";
 
 const DEFAULT_PORT = 8790;
 

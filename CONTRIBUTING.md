@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve `@khoralabs/relay`. This repo is a Bun workspace with packages under `packages/` and deployable apps under `apps/`.
+Thanks for helping improve `@khoralabs/relay`. This repo is a Bun workspace with the publishable library under `packages/relay` and the deployable server under `apps/relay-server`.
 
 ## Prerequisites
 

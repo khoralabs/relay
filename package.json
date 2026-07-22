@@ -1,5 +1,5 @@
 {
-  "name": "@khoralabs/relay",
+  "name": "@khoralabs/relay-monorepo",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -12,8 +12,11 @@
     "check:write": "biome check --write .",
     "format": "biome check --write .",
     "format:check": "biome check .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p packages/relay/tsconfig.json && tsc --noEmit -p apps/relay-server/tsconfig.json",
     "test": "bun test",
+    "build": "bun run scripts/build-packages.ts",
+    "release:bump": "bun run scripts/bump-versions.ts",
+    "release:publish": "bun run scripts/publish-packages.ts",
     "prepare": "husky",
     "context": "bun run scripts/context.ts"
   },
@@ -30,6 +33,5 @@
   },
   "dependencies": {
     "@types/parse-gitignore": "^1.0.2"
-  },
-  "module": "index.ts"
+  }
 }

@@ -23,11 +23,10 @@
       "name": "@khoralabs/relay-server",
       "version": "0.0.0",
       "dependencies": {
-        "@khoralabs/relay-server-http": "workspace:*",
+        "@khoralabs/relay": "workspace:*",
       },
       "devDependencies": {
-        "@khoralabs/relay-client": "workspace:*",
-        "@khoralabs/relay-contracts": "workspace:*",
+        "@khoralabs/sqlite-crypto": "^0.1.0",
         "@noble/ed25519": "^3.1.0",
         "@types/bun": "latest",
         "typescript": "^5",
@@ -36,107 +35,30 @@
         "typescript": "^5",
       },
     },
-    "packages/relay-admission": {
-      "name": "@khoralabs/relay-admission",
-      "version": "0.0.0",
+    "packages/relay": {
+      "name": "@khoralabs/relay",
+      "version": "0.1.0",
       "dependencies": {
-        "@khoralabs/relay-contracts": "workspace:*",
-      },
-      "devDependencies": {
-        "@types/bun": "latest",
-        "typescript": "^5",
-      },
-      "peerDependencies": {
-        "typescript": "^5",
-      },
-    },
-    "packages/relay-client": {
-      "name": "@khoralabs/relay-client",
-      "version": "0.0.0",
-      "dependencies": {
-        "@khoralabs/relay-contracts": "workspace:*",
-        "@khoralabs/relay-crypto": "workspace:*",
-        "@khoralabs/relay-mls": "workspace:*",
-      },
-      "devDependencies": {
-        "@types/bun": "latest",
-        "typescript": "^5",
-      },
-      "peerDependencies": {
-        "typescript": "^5",
-      },
-    },
-    "packages/relay-contracts": {
-      "name": "@khoralabs/relay-contracts",
-      "version": "0.0.0",
-      "dependencies": {
-        "@khoralabs/relay-crypto": "workspace:*",
-      },
-      "devDependencies": {
-        "@types/bun": "latest",
-        "typescript": "^5",
-      },
-      "peerDependencies": {
-        "typescript": "^5",
-      },
-    },
-    "packages/relay-crypto": {
-      "name": "@khoralabs/relay-crypto",
-      "version": "0.0.0",
-      "dependencies": {
+        "@hpke/core": "^1.9.0",
         "@noble/curves": "^2.2.0",
         "@noble/ed25519": "^3.1.0",
         "@noble/hashes": "^2.2.0",
         "@scure/base": "^1.2.6",
         "lru-cache": "^11.5.1",
-      },
-      "devDependencies": {
-        "@types/bun": "latest",
-        "typescript": "^5",
-      },
-      "peerDependencies": {
-        "typescript": "^5",
-      },
-    },
-    "packages/relay-mls": {
-      "name": "@khoralabs/relay-mls",
-      "version": "0.0.0",
-      "dependencies": {
-        "@hpke/core": "^1.9.0",
-        "@khoralabs/relay-contracts": "workspace:*",
-        "@khoralabs/relay-crypto": "workspace:*",
-        "@noble/ed25519": "^3.1.0",
-        "@noble/hashes": "^2.2.0",
         "ts-mls": "^1.6.2",
       },
       "devDependencies": {
-        "@types/bun": "latest",
-        "typescript": "^5",
-      },
-      "peerDependencies": {
-        "typescript": "^5",
-      },
-    },
-    "packages/relay-server-http": {
-      "name": "@khoralabs/relay-server-http",
-      "version": "0.0.0",
-      "dependencies": {
-        "@khoralabs/relay-admission": "workspace:*",
-        "@khoralabs/relay-contracts": "workspace:*",
-        "@khoralabs/relay-crypto": "workspace:*",
         "@khoralabs/sqlite-crypto": "^0.1.0",
-        "@noble/ed25519": "^3.1.0",
-        "ts-mls": "^1.6.2",
-      },
-      "devDependencies": {
-        "@khoralabs/relay-client": "workspace:*",
-        "@khoralabs/relay-mls": "workspace:*",
         "@types/bun": "latest",
         "typescript": "^5",
       },
       "peerDependencies": {
+        "@khoralabs/sqlite-crypto": "^0.1.0",
         "typescript": "^5",
       },
+      "optionalPeers": [
+        "@khoralabs/sqlite-crypto",
+      ],
     },
   },
   "packages": {
@@ -162,19 +84,9 @@
 
     "@hpke/core": ["@hpke/core@1.9.0", "", { "dependencies": { "@hpke/common": "^1.10.0" } }, "sha512-pFxWl1nNJeQCSUFs7+GAblHvXBCjn9EPN65vdKlYQil2aURaRxfGMO6vBKGqm1YHTKwiAxJQNEI70PbSowMP9Q=="],
 
-    "@khoralabs/relay-admission": ["@khoralabs/relay-admission@workspace:packages/relay-admission"],
-
-    "@khoralabs/relay-client": ["@khoralabs/relay-client@workspace:packages/relay-client"],
-
-    "@khoralabs/relay-contracts": ["@khoralabs/relay-contracts@workspace:packages/relay-contracts"],
-
-    "@khoralabs/relay-crypto": ["@khoralabs/relay-crypto@workspace:packages/relay-crypto"],
-
-    "@khoralabs/relay-mls": ["@khoralabs/relay-mls@workspace:packages/relay-mls"],
+    "@khoralabs/relay": ["@khoralabs/relay@workspace:packages/relay"],
 
     "@khoralabs/relay-server": ["@khoralabs/relay-server@workspace:apps/relay-server"],
-
-    "@khoralabs/relay-server-http": ["@khoralabs/relay-server-http@workspace:packages/relay-server-http"],
 
     "@khoralabs/sqlite-crypto": ["@khoralabs/sqlite-crypto@0.1.0", "", {}, "sha512-HTpnQtwaPQDD0J5fwk9w8o47cs1HrhTBYEL5SKUlEMuvUdcqC/JgEZzwMqeT7wIZQLPdrBuPoHJMyrAkyVJGDw=="],
 

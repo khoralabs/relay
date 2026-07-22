@@ -1,0 +1,91 @@
+{
+  "name": "@khoralabs/relay",
+  "version": "0.1.0",
+  "description": "DID-authenticated encrypted blob transport: client, server, contracts, MLS",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/khoralabs/relay.git",
+    "directory": "packages/relay"
+  },
+  "homepage": "https://github.com/khoralabs/relay/tree/main/packages/relay#readme",
+  "bugs": "https://github.com/khoralabs/relay/issues",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "bun run ../../scripts/build-package.ts .",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "bun test"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./client": {
+      "types": "./src/client/index.ts",
+      "import": "./src/client/index.ts",
+      "default": "./src/client/index.ts"
+    },
+    "./crypto": {
+      "types": "./src/crypto/index.ts",
+      "import": "./src/crypto/index.ts",
+      "default": "./src/crypto/index.ts"
+    },
+    "./contracts": {
+      "types": "./src/contracts/index.ts",
+      "import": "./src/contracts/index.ts",
+      "default": "./src/contracts/index.ts"
+    },
+    "./admission": {
+      "types": "./src/admission/index.ts",
+      "import": "./src/admission/index.ts",
+      "default": "./src/admission/index.ts"
+    },
+    "./mls": {
+      "types": "./src/mls/index.ts",
+      "import": "./src/mls/index.ts",
+      "default": "./src/mls/index.ts"
+    },
+    "./server": {
+      "types": "./src/server/index.ts",
+      "import": "./src/server/index.ts",
+      "default": "./src/server/index.ts"
+    },
+    "./testing": {
+      "types": "./src/testing/index.ts",
+      "import": "./src/testing/index.ts",
+      "default": "./src/testing/index.ts"
+    }
+  },
+  "dependencies": {
+    "@hpke/core": "^1.9.0",
+    "@noble/curves": "^2.2.0",
+    "@noble/ed25519": "^3.1.0",
+    "@noble/hashes": "^2.2.0",
+    "@scure/base": "^1.2.6",
+    "lru-cache": "^11.5.1",
+    "ts-mls": "^1.6.2"
+  },
+  "peerDependencies": {
+    "@khoralabs/sqlite-crypto": "^0.1.0",
+    "typescript": "^5"
+  },
+  "peerDependenciesMeta": {
+    "@khoralabs/sqlite-crypto": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@khoralabs/sqlite-crypto": "^0.1.0",
+    "@types/bun": "latest",
+    "typescript": "^5"
+  }
+}

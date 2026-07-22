@@ -1,12 +1,12 @@
 import { expect, test } from "bun:test";
-import { connectRelay } from "@khoralabs/relay-client";
-import { relayWsUpgradeProtocol } from "@khoralabs/relay-contracts";
+import { connectRelay } from "@khoralabs/relay/client";
+import { relayWsUpgradeProtocol } from "@khoralabs/relay/contracts";
 import {
   createTestAgent,
   createTestRelayApp,
   signedFetch,
   signedPath,
-} from "@khoralabs/relay-server-http/testing";
+} from "@khoralabs/relay/testing";
 
 function serve(app: Awaited<ReturnType<typeof createTestRelayApp>>["app"]) {
   return Bun.serve({

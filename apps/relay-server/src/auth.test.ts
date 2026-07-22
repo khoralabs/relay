@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
-import { AGENT_REQUEST_HEADER, canonicalAgentRequestMessage } from "@khoralabs/relay-contracts";
-import { createRelayAuth } from "@khoralabs/relay-server-http";
-import { createTestAgent, signedPath } from "@khoralabs/relay-server-http/testing";
+import { AGENT_REQUEST_HEADER, canonicalAgentRequestMessage } from "@khoralabs/relay/contracts";
+import { createRelayAuth } from "@khoralabs/relay/server";
+import { createTestAgent, signedPath } from "@khoralabs/relay/testing";
 import { signAsync } from "@noble/ed25519";
 
 function bytesToBase64Url(bytes: Uint8Array): string {

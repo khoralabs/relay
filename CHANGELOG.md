@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** Consolidated `@khoralabs/relay-{crypto,contracts,admission,mls,client,server-http}` into a single publishable package `@khoralabs/relay` with subpath exports (`./client`, `./crypto`, `./contracts`, `./admission`, `./mls`, `./server`, `./testing`). See root README for the import migration map.
+- Added npm build/publish scripts and `.github/workflows/release.yml`.
+
 ### Added
 
 - Initial scaffold: `package.json` workspace, `biome.json`, `tsconfig.json`, Husky hooks, VS Code config.

@@ -4,7 +4,7 @@ Deployable relay server binary — a DID-authenticated encrypted blob transport 
 
 ## Overview
 
-Wraps `@khoralabs/relay-server-http` into a runnable `Bun.serve` process. Supports two modes:
+Wraps `@khoralabs/relay/server` into a runnable `Bun.serve` process. Supports two modes:
 
 - **pool** — multi-channel, open creation (default)
 - **single** — one pre-configured channel bootstrapped at startup (set `RELAY_CHANNEL_ID` + `RELAY_CHANNEL_CREATOR_DID`, or `RELAY_MODE=single`)
@@ -52,7 +52,7 @@ Default port: **8790** (override with `PORT`).
 
 Single-instance deployments can rely on SQLite (`RELAY_DB_PATH`) for agent-request nonce replay protection and HTTP rate limits. Behind a load balancer, set `RELAY_REDIS_URL`.
 
-MLS group-state and KeyPackage private halves are encrypted client-side via `RELAY_MLS_GROUP_STATE_ENCRYPTION_KEY` in `@khoralabs/relay-mls` — not read by this server binary.
+MLS group-state and KeyPackage private halves are encrypted client-side via `RELAY_MLS_GROUP_STATE_ENCRYPTION_KEY` in `@khoralabs/relay/mls` — not read by this server binary.
 
 ## Tests
 
