@@ -68,10 +68,14 @@ jobs:
       - name: Publish packages
         if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
         env:
-          # bun publish reads NPM_CONFIG_TOKEN (not NPM_TOKEN / NODE_AUTH_TOKEN)
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Prefer secrets.NPM_TOKEN; also accept secrets.NPM_CONFIG_TOKEN if that is what was created.
+          # bun publish reads the NPM_CONFIG_TOKEN env var (not NPM_TOKEN / NODE_AUTH_TOKEN).
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN || secrets.NPM_CONFIG_TOKEN }}
         run: |
-          test -n "$NPM_CONFIG_TOKEN" || (echo "NPM_TOKEN secret is required" && exit 1)
+          if [ -z "$NPM_CONFIG_TOKEN" ]; then
+            echo "::error::Set repository secret NPM_TOKEN (or NPM_CONFIG_TOKEN). It is mapped to the NPM_CONFIG_TOKEN env var for bun publish."
+            exit 1
+          fi
           bun run release:publish
 
       - name: Dry-run publish preview
