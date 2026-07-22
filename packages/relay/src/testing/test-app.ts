@@ -31,6 +31,9 @@ export async function createTestRelayApp(opts?: CreateTestRelayAppOptions): Prom
   const owned =
     opts?.persistence === undefined ? createDefaultTestPersistence(opts?.env) : undefined;
   const persistence = opts?.persistence ?? owned?.persistence;
+  if (persistence === undefined) {
+    throw new Error("persistence is undefined");
+  }
   const hub = createRelayHub({ admission: persistence.admission, spool: persistence.spool });
 
   let relayProfile: RelayProfile =

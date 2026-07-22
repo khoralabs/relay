@@ -142,8 +142,13 @@ export function describePersistenceStrategyContract(
 
         const key = pairingSecretKeyFromHex(TEST_PAIRING_SECRET_KEY_HEX);
         const secretHex = "deadbeef".repeat(8);
-        const admission = strategy.createAdmissionStore?.(key);
-        const spool = strategy.createBlobSpool?.();
+        const createAdmission = strategy.createAdmissionStore;
+        const createSpool = strategy.createBlobSpool;
+        if (createAdmission === undefined || createSpool === undefined) {
+          throw new Error("durable factories missing after hasDurable check");
+        }
+        const admission = createAdmission(key);
+        const spool = createSpool();
         const now = 1_000_000;
 
         admission.upsertChannelAdmission({
