@@ -16,4 +16,8 @@ export {
   createRelayPersistence,
   ephemeralStrategyFromEnv,
 } from "./service";
+export {
+  describePersistenceStrategyContract,
+  type PersistenceStrategyHarness,
+} from "./strategy.contract";
 export type { RelayPersistence, RelayPersistenceStrategy } from "./types";
