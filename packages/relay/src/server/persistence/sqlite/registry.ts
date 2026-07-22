@@ -11,7 +11,7 @@ import {
   type RelaySessionQuota,
   type RosterSnapshot,
 } from "@khoralabs/relay/contracts";
-import { hashInviteToken } from "./invites";
+import { hashInviteToken } from "../../invites";
 
 export type KeyPackageFetchResult = {
   keyPackage: Uint8Array;

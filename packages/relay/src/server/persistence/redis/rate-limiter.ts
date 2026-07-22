@@ -1,5 +1,5 @@
-import type { RateLimitCheck, RateLimitRule } from "./rate-limit";
-import type { RelayRedisClient } from "./relay-redis";
+import type { RateLimitCheck, RateLimitRule } from "../../rate-limit";
+import type { RelayRedisClient } from "./client";
 
 function rateLimitKey(prefix: string, bucket: string, windowStart: number): string {
   return `${prefix}:rl:${bucket}:${windowStart}`;

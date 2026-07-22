@@ -1,3 +1,6 @@
-export { createTestRelayApp } from "./test-app";
-export { createRelayStores, DEV_SQLCIPHER_KEY, openRelayDatabase } from "./test-db";
+export {
+  type CreateTestRelayAppOptions,
+  createTestRelayApp,
+  type TestRelayApp,
+} from "./test-app";
 export { createTestAgent, signedFetch, signedPath } from "./test-sign";

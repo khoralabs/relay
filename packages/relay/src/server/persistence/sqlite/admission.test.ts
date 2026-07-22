@@ -5,7 +5,7 @@ import {
   pairingSecretKeyFromHex,
   TEST_PAIRING_SECRET_KEY_HEX,
 } from "@khoralabs/relay/crypto";
-import { createChannelAdmissionStore, ensureChannelAdmissionSchema } from "./channel-admission";
+import { createChannelAdmissionStore, ensureChannelAdmissionSchema } from "./admission";
 
 const key = pairingSecretKeyFromHex(TEST_PAIRING_SECRET_KEY_HEX);
 const secretHex = "deadbeef".repeat(8);

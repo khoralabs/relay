@@ -1,6 +1,6 @@
 import type { Database } from "bun:sqlite";
-import type { RateLimitCheck, RateLimitRule } from "./rate-limit";
-import { ensureRelayStateSchema } from "./relay-state-schema";
+import type { RateLimitCheck, RateLimitRule } from "../../rate-limit";
+import { ensureRelayStateSchema } from "./state-schema";
 
 export function createSqliteRateLimiter(
   db: Database,

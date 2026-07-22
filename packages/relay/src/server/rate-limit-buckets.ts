@@ -1,7 +1,5 @@
-import type { Database } from "bun:sqlite";
-import { createRelayRateLimiterFromEnv } from "./create-rate-limiter";
-import type { RateLimitCheck, RateLimiter } from "./rate-limit";
-import type { RelayRedisClient } from "./relay-redis";
+import type { RelayPersistence } from "./persistence/core/types";
+import { envRatePerMinute, type RateLimitCheck, type RateLimiter } from "./rate-limit";
 
 export type RelayRateLimiters = {
   channelsCreateDid: RateLimiter;
@@ -14,40 +12,18 @@ export type RelayRateLimiters = {
 
 export function createRelayRateLimiters(
   env: NodeJS.ProcessEnv = process.env,
-  opts?: { db?: Database; redis?: RelayRedisClient; redisPrefix?: string },
+  persistence: Pick<RelayPersistence, "createRateLimiter">,
 ): RelayRateLimiters {
-  const backing = {
-    db: opts?.db,
-    redis: opts?.redis,
-    redisPrefix: opts?.redisPrefix,
-  };
+  const create = (raw: string | undefined, defaultMax: number) =>
+    persistence.createRateLimiter(envRatePerMinute(raw, defaultMax));
+
   return {
-    channelsCreateDid: createRelayRateLimiterFromEnv(
-      env.RELAY_RL_CHANNELS_CREATE_PER_MIN_PER_DID,
-      30,
-      backing,
-    ),
-    channelsJoinDid: createRelayRateLimiterFromEnv(
-      env.RELAY_RL_CHANNELS_JOIN_PER_MIN_PER_DID,
-      30,
-      backing,
-    ),
-    channelsTicketMintDid: createRelayRateLimiterFromEnv(
-      env.RELAY_RL_CHANNELS_TICKET_PER_MIN_PER_DID,
-      60,
-      backing,
-    ),
-    channelsAllocateDid: createRelayRateLimiterFromEnv(
-      env.RELAY_RL_CHANNELS_ALLOCATE_PER_MIN_PER_DID,
-      60,
-      backing,
-    ),
-    keyPackageFetchDid: createRelayRateLimiterFromEnv(
-      env.RELAY_RL_KEY_PACKAGES_FETCH_PER_MIN_PER_DID,
-      30,
-      backing,
-    ),
-    defaultIp: createRelayRateLimiterFromEnv(env.RELAY_RL_DEFAULT_PER_MIN_PER_IP, 900, backing),
+    channelsCreateDid: create(env.RELAY_RL_CHANNELS_CREATE_PER_MIN_PER_DID, 30),
+    channelsJoinDid: create(env.RELAY_RL_CHANNELS_JOIN_PER_MIN_PER_DID, 30),
+    channelsTicketMintDid: create(env.RELAY_RL_CHANNELS_TICKET_PER_MIN_PER_DID, 60),
+    channelsAllocateDid: create(env.RELAY_RL_CHANNELS_ALLOCATE_PER_MIN_PER_DID, 60),
+    keyPackageFetchDid: create(env.RELAY_RL_KEY_PACKAGES_FETCH_PER_MIN_PER_DID, 30),
+    defaultIp: create(env.RELAY_RL_DEFAULT_PER_MIN_PER_IP, 900),
   };
 }
 

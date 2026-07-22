@@ -1,5 +1,5 @@
-import type { NonceStore } from "./nonce-store";
-import type { RelayRedisClient } from "./relay-redis";
+import type { NonceStore } from "../../nonce-store";
+import type { RelayRedisClient } from "./client";
 
 function nonceKey(prefix: string, did: string, nonce: string): string {
   return `${prefix}:agent-nonce:${did}:${nonce}`;

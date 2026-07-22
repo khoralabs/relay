@@ -1,7 +1,7 @@
 import { Database } from "bun:sqlite";
 import { describe, expect, test } from "bun:test";
-import { ensureRelayStateSchema } from "./relay-state-schema";
-import { createSqliteNonceStore } from "./sqlite-nonce-store";
+import { createSqliteNonceStore } from "./nonce-store";
+import { ensureRelayStateSchema } from "./state-schema";
 
 function openDb(): Database {
   const db = new Database(":memory:");

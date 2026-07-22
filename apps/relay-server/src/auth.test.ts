@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { AGENT_REQUEST_HEADER, canonicalAgentRequestMessage } from "@khoralabs/relay/contracts";
-import { createRelayAuth } from "@khoralabs/relay/server";
+import { createInMemoryNonceStore, createRelayAuth } from "@khoralabs/relay/server";
 import { createTestAgent, signedPath } from "@khoralabs/relay/testing";
 import { signAsync } from "@noble/ed25519";
 
@@ -40,7 +40,10 @@ async function signedHeaders(
 }
 
 test("auth rejects missing signature", async () => {
-  const auth = createRelayAuth({ now: () => 1_700_000_000_000 });
+  const auth = createRelayAuth({
+    now: () => 1_700_000_000_000,
+    nonceStore: createInMemoryNonceStore(),
+  });
   const req = new Request("http://localhost/v1/channels", {
     method: "POST",
     headers: { [AGENT_REQUEST_HEADER.did]: "did:key:z6Mktest" },
@@ -53,7 +56,7 @@ test("auth rejects missing signature", async () => {
 
 test("auth rejects nonce replay", async () => {
   const now = () => 1_700_000_000_000;
-  const auth = createRelayAuth({ now });
+  const auth = createRelayAuth({ now, nonceStore: createInMemoryNonceStore() });
   const agent = await createTestAgent();
   const path = signedPath("/v1/channels");
   const bodyText = "{}";

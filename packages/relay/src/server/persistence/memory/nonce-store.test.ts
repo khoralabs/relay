@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createInMemoryNonceStore } from "./in-memory-nonce-store";
+import { createInMemoryNonceStore } from "./nonce-store";
 
 describe("in-memory-nonce-store", () => {
   test("rejects duplicate while not expired", () => {

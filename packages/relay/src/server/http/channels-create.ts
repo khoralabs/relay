@@ -5,7 +5,7 @@ import {
 
 import { MAX_CHANNEL_TTL_MS } from "../auth";
 import { randomInviteToken } from "../invites";
-import { parseCreateChannelPolicy } from "../registry";
+import { parseCreateChannelPolicy } from "../persistence/sqlite/registry";
 import { DEFAULT_CHANNEL_TTL_MS } from "../relay-config";
 import { jsonError } from "../responses";
 import type { RelayHttpDeps } from "./deps";

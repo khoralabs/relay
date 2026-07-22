@@ -2,10 +2,10 @@ import type { Database } from "bun:sqlite";
 import { chmodSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { openEncryptedDatabaseSync, SqliteCryptoError } from "@khoralabs/sqlite-crypto";
-import { createBlobSpool } from "./blob-spool";
-import { createChannelAdmissionStoreFromEnv } from "./channel-admission";
+import { createRelayPersistence } from "../core/service";
 import { ensureChannelRegistrySchema } from "./registry-schema";
-import { ensureRelayStateSchema } from "./relay-state-schema";
+import { ensureRelayStateSchema } from "./state-schema";
+import { createSqlitePersistenceStrategy } from "./strategy";
 
 export const RELAY_SQLCIPHER_ENV = "RELAY_SQLCIPHER_KEY";
 export const DEV_SQLCIPHER_KEY = "relay-dev-sqlcipher-key";
@@ -15,7 +15,7 @@ export function relayDatabasePath(env: NodeJS.ProcessEnv = process.env): string 
   const raw =
     configured !== undefined && configured.length > 0
       ? configured
-      : resolve(import.meta.dir, "../../data/relay.sqlite");
+      : resolve(import.meta.dir, "../../../data/relay.sqlite");
   if (raw === ":memory:") return raw;
   return isAbsolute(raw) ? raw : resolve(process.cwd(), raw);
 }
@@ -68,9 +68,15 @@ export function openRelayDatabase(path?: string, key?: string): Database {
   return db;
 }
 
-export function createRelayStores(db: Database) {
+export function createRelayStores(db: Database, env: NodeJS.ProcessEnv = process.env) {
+  const persistence = createRelayPersistence({
+    durable: createSqlitePersistenceStrategy(db),
+    env,
+  });
   return {
-    admission: createChannelAdmissionStoreFromEnv(db),
-    spool: createBlobSpool(db),
+    admission: persistence.admission,
+    spool: persistence.spool,
+    registry: persistence.registry,
+    persistence,
   };
 }

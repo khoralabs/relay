@@ -1,7 +1,7 @@
 import { Database } from "bun:sqlite";
 import { describe, expect, test } from "bun:test";
-import { ensureRelayStateSchema } from "./relay-state-schema";
-import { createSqliteRateLimiter } from "./sqlite-rate-limiter";
+import { createSqliteRateLimiter } from "./rate-limiter";
+import { ensureRelayStateSchema } from "./state-schema";
 
 describe("sqlite-rate-limiter", () => {
   test("enforces cap within window", () => {

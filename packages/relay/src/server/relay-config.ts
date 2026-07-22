@@ -5,7 +5,7 @@ import {
 } from "@khoralabs/relay/contracts";
 
 import { MAX_CHANNEL_TTL_MS } from "./auth";
-import type { ChannelRegistry } from "./registry";
+import type { ChannelRegistry } from "./persistence/sqlite/registry";
 import { envRelayMaxChannels } from "./relay-env";
 import type { RelayHub } from "./relay-hub";
 

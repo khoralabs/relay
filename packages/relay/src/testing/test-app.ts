@@ -1,11 +1,4 @@
-import type { Database } from "bun:sqlite";
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-
-import { createRelayApp, type RelayApp } from "../server/app";
-import { createRelayStores, DEV_SQLCIPHER_KEY, openRelayDatabase } from "../server/db";
-import { createChannelRegistry } from "../server/registry";
+import { type BlobSpool, createRelayApp, type RelayApp, type RelayPersistence } from "../server";
 import {
   bootstrapSingleChannel,
   type RelayProfile,
@@ -13,33 +6,32 @@ import {
 } from "../server/relay-config";
 import { envRelayMaxChannels } from "../server/relay-env";
 import { createRelayHub } from "../server/relay-hub";
-
 import type { WsOriginPolicy } from "../server/ws-origin-policy";
+import { createDefaultTestPersistence } from "./default-persistence";
 
-export async function createTestRelayApp(opts?: {
+export type CreateTestRelayAppOptions = {
+  /** Injected persistence. When omitted, an ephemeral in-process default is used. */
+  persistence?: RelayPersistence;
+  /** Extra cleanup when providing custom `persistence` (default harness cleans itself). */
+  cleanup?: () => void;
   relayProfile?: RelayProfile;
   singleBootstrap?: SingleChannelConfig;
-  dbPath?: string;
   env?: NodeJS.ProcessEnv;
   wsOriginPolicy?: WsOriginPolicy;
-}): Promise<{
-  app: RelayApp;
-  db: Database;
-  spool: ReturnType<typeof createRelayStores>["spool"];
-  cleanup(): void;
-}> {
-  let cleanupDir: string | undefined;
-  const dbPath =
-    opts?.dbPath ??
-    (() => {
-      cleanupDir = mkdtempSync(join(tmpdir(), "relay-test-"));
-      return join(cleanupDir, "relay.sqlite");
-    })();
+};
 
-  const db = openRelayDatabase(dbPath, DEV_SQLCIPHER_KEY);
-  const stores = createRelayStores(db);
-  const hub = createRelayHub({ admission: stores.admission, spool: stores.spool });
-  const registry = createChannelRegistry(db);
+export type TestRelayApp = {
+  app: RelayApp;
+  spool: BlobSpool;
+  persistence: RelayPersistence;
+  cleanup(): void;
+};
+
+export async function createTestRelayApp(opts?: CreateTestRelayAppOptions): Promise<TestRelayApp> {
+  const owned =
+    opts?.persistence === undefined ? createDefaultTestPersistence(opts?.env) : undefined;
+  const persistence = opts?.persistence ?? owned?.persistence;
+  const hub = createRelayHub({ admission: persistence.admission, spool: persistence.spool });
 
   let relayProfile: RelayProfile =
     opts?.relayProfile ??
@@ -50,14 +42,17 @@ export async function createTestRelayApp(opts?: {
   }
 
   if (relayProfile.mode === "single") {
-    await bootstrapSingleChannel({ hub, registry, config: relayProfile.config });
+    await bootstrapSingleChannel({
+      hub,
+      registry: persistence.registry,
+      config: relayProfile.config,
+    });
   }
 
   const app = createRelayApp({
-    registry,
     hub,
-    spool: stores.spool,
-    db,
+    spool: persistence.spool,
+    persistence,
     relayProfile,
     env: opts?.env,
     wsOriginPolicy: opts?.wsOriginPolicy,
@@ -65,13 +60,11 @@ export async function createTestRelayApp(opts?: {
 
   return {
     app,
-    db,
-    spool: stores.spool,
+    spool: persistence.spool,
+    persistence,
     cleanup() {
-      db.close();
-      if (cleanupDir !== undefined) {
-        rmSync(cleanupDir, { recursive: true, force: true });
-      }
+      owned?.cleanup();
+      opts?.cleanup?.();
     },
   };
 }

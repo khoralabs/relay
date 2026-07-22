@@ -1,12 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { createRelayStores, openRelayDatabase } from "./db";
+import { openRelayPersistence, sqliteBackend } from "./persistence";
 import { createRelayHub } from "./relay-hub";
 
 describe("createRelayHub opaque relay", () => {
   test("echoes same bytes to sender and peer", async () => {
-    const db = openRelayDatabase(":memory:");
-    const stores = createRelayStores(db);
-    const hub = createRelayHub({ admission: stores.admission, spool: stores.spool });
+    const { persistence, cleanup } = openRelayPersistence({
+      durable: sqliteBackend({ path: ":memory:" }),
+    });
+    const hub = createRelayHub({ admission: persistence.admission, spool: persistence.spool });
     const receivedA: Uint8Array[] = [];
     const receivedB: Uint8Array[] = [];
     const peerA = { send: (b: Uint8Array) => receivedA.push(b) };
@@ -22,6 +23,6 @@ describe("createRelayHub opaque relay", () => {
     expect(receivedB.length).toBe(1);
     expect(receivedA[0]).toEqual(inbound);
     expect(receivedB[0]).toEqual(inbound);
-    db.close();
+    cleanup();
   });
 });

@@ -1,4 +1,4 @@
-import { isRosterAtCapacity } from "../registry";
+import { isRosterAtCapacity } from "../persistence/sqlite/registry";
 import { jsonError } from "../responses";
 import type { RelayHttpDeps } from "./deps";
 import {

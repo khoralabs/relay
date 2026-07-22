@@ -1,6 +1,6 @@
 import type { Database } from "bun:sqlite";
-import type { NonceStore } from "./nonce-store";
-import { ensureRelayStateSchema } from "./relay-state-schema";
+import type { NonceStore } from "../../nonce-store";
+import { ensureRelayStateSchema } from "./state-schema";
 
 export function createSqliteNonceStore(db: Database): NonceStore {
   let initialized = false;

@@ -5,7 +5,7 @@ import {
   verifyChannelTicketClaims,
 } from "@khoralabs/relay/admission";
 import type { ServerWebSocket } from "bun";
-import type { BlobSpool } from "./blob-spool";
+import type { BlobSpool } from "./persistence/sqlite/blob-spool";
 import type { ChannelIngressLimiter } from "./relay-ws-limits";
 import { MAX_RELAY_WS_FRAME_BYTES } from "./relay-ws-limits";
 

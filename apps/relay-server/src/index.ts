@@ -1,11 +1,10 @@
 import {
   bootstrapSingleChannel,
-  createChannelRegistry,
   createRelayApp,
   createRelayHub,
-  createRelayStores,
   loadRelayProfile,
-  openRelayDatabase,
+  openRelayPersistence,
+  sqliteBackend,
 } from "@khoralabs/relay/server";
 
 const DEFAULT_PORT = 8790;
@@ -18,19 +17,23 @@ function envPort(): number {
 }
 
 const relayProfile = loadRelayProfile();
-const db = openRelayDatabase();
-const stores = createRelayStores(db);
-const hub = createRelayHub({ admission: stores.admission, spool: stores.spool });
-const registry = createChannelRegistry(db);
+const { persistence } = openRelayPersistence({
+  durable: sqliteBackend(),
+});
+const hub = createRelayHub({ admission: persistence.admission, spool: persistence.spool });
 
 if (relayProfile.mode === "single") {
-  await bootstrapSingleChannel({ hub, registry, config: relayProfile.config });
+  await bootstrapSingleChannel({
+    hub,
+    registry: persistence.registry,
+    config: relayProfile.config,
+  });
 }
 
 const app = createRelayApp({
-  registry,
   hub,
-  spool: stores.spool,
+  spool: persistence.spool,
+  persistence,
   relayProfile,
 });
 

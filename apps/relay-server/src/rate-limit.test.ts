@@ -21,14 +21,14 @@ test("rate limiter returns 429", async () => {
 });
 
 test("channels create rate limit → 429", async () => {
-  const { app, spool, cleanup } = await createTestRelayApp();
+  const { app, spool, persistence, cleanup } = await createTestRelayApp();
   const limitedApp = createRelayApp({
-    registry: app.registry,
     hub: app.hub,
     spool,
+    persistence,
     auth: app.auth,
     rateLimiters: {
-      ...createRelayRateLimiters(),
+      ...createRelayRateLimiters(process.env, persistence),
       channelsCreateDid: createInMemoryRateLimiter({ windowMs: 60_000, max: 1 }),
     },
   });

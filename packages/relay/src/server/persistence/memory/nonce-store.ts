@@ -1,4 +1,4 @@
-import type { NonceStore } from "./nonce-store";
+import type { NonceStore } from "../../nonce-store";
 
 type NonceEntry = { expiresAtMs: number };
 

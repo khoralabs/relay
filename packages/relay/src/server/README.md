@@ -11,14 +11,13 @@ Server library providing the HTTP + WebSocket relay implementation. Consumed by 
 | `createRelayApp` | Builds the `fetch` + `websocket` handlers for `Bun.serve` |
 | `createRelayHub` | In-memory WebSocket hub with optional blob spool |
 | `createChannelRegistry` | SQLite-backed channel/session/roster/KeyPackage/Welcome store |
-| `openRelayDatabase` | Opens the SQLCipher SQLite database |
-| `createRelayStores` | Creates admission store + blob spool from an open DB |
+| `openRelayPersistence` / `sqliteBackend` / `redisBackend` / `memoryBackend` | Open `RelayPersistence` from strategy material (no Database handles) |
+| `createRelayStores` | Low-level: compose persistence from an already-open SQLite `Database` |
 | `loadRelayProfile` | Reads `RELAY_MODE` env to produce a `pool` or `single` profile |
 | `bootstrapSingleChannel` | Seeds a single channel on startup (single mode) |
-| `createRelayAuth` | DID-signed request verifier |
-| `createNonceStore` | Env-aware agent-request nonce store (SQLite, Redis, or in-memory) |
+| `createRelayAuth` | DID-signed request verifier (requires `nonceStore`) |
 | `createSqliteNonceStore` / `createInMemoryNonceStore` | Direct nonce store constructors |
-| `createRelayRateLimiters` / `createBackedRateLimiter` / `createRelayRateLimiterFromEnv` | HTTP rate limiting (SQLite, Redis, or in-memory backends) |
+| `createRelayRateLimiters` | HTTP rate limiting via `RelayPersistence.createRateLimiter` |
 | `createRelayIngressLimiter` / `createChannelIngressLimiter` | Per-channel WebSocket ingress byte/frame limits |
 | `createBlobSpool` | SQLite-backed blob replay store |
 | `checkWsUpgradeOrigin` / `wsOriginPolicyFromEnv` | Browser WebSocket origin policy |
@@ -26,7 +25,7 @@ Server library providing the HTTP + WebSocket relay implementation. Consumed by 
 
 ### Testing (`@khoralabs/relay-server-http/testing`)
 
-Helpers for spinning up in-process relay instances in tests (`test-app.ts`, `test-db.ts`, `test-sign.ts`).
+Helpers for spinning up in-process relay instances in tests (`createTestRelayApp`, signing helpers). Pass `persistence` to inject a strategy; omit it for an ephemeral default.
 
 ## HTTP API
 
