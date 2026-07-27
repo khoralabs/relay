@@ -11,7 +11,7 @@ Server library providing the HTTP + WebSocket relay implementation. Consumed by 
 | `createRelayApp` | Builds the `fetch` + `websocket` handlers for `Bun.serve` |
 | `createRelayHub` | In-memory WebSocket hub with optional blob spool |
 | `createChannelRegistry` | SQLite-backed channel/session/roster/KeyPackage/Welcome store |
-| `openRelayPersistence` / `sqliteBackend` / `redisBackend` / `memoryBackend` | Open `RelayPersistence` from strategy material (no Database handles) |
+| `openRelayPersistence` / `sqliteBackend` / `redisBackend` / `memoryBackend` | Open `RelayPersistence` from strategy material (no Database handles). `sqliteBackend({ key })` enables SQLCipher; omit `key` / `RELAY_SQLCIPHER_KEY` for plaintext. |
 | `createRelayStores` | Low-level: compose persistence from an already-open SQLite `Database` |
 | `loadRelayProfile` | Reads `RELAY_MODE` env to produce a `pool` or `single` profile |
 | `bootstrapSingleChannel` | Seeds a single channel on startup (single mode) |

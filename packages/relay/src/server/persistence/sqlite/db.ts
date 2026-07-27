@@ -1,4 +1,4 @@
-import type { Database } from "bun:sqlite";
+import { Database } from "bun:sqlite";
 import { chmodSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { openEncryptedDatabaseSync, SqliteCryptoError } from "@khoralabs/sqlite-crypto";
@@ -8,6 +8,7 @@ import { ensureRelayStateSchema } from "./state-schema";
 import { createSqlitePersistenceStrategy } from "./strategy";
 
 export const RELAY_SQLCIPHER_ENV = "RELAY_SQLCIPHER_KEY";
+/** Fixed key for unit/integration tests only — not used as a runtime default. */
 export const DEV_SQLCIPHER_KEY = "relay-dev-sqlcipher-key";
 
 export function relayDatabasePath(env: NodeJS.ProcessEnv = process.env): string {
@@ -20,18 +21,16 @@ export function relayDatabasePath(env: NodeJS.ProcessEnv = process.env): string 
   return isAbsolute(raw) ? raw : resolve(process.cwd(), raw);
 }
 
-export function sqlCipherKeyFromEnv(env: NodeJS.ProcessEnv = process.env): string {
+/**
+ * Resolve `RELAY_SQLCIPHER_KEY` when set (≥16 chars); otherwise `undefined` (plaintext).
+ */
+export function sqlCipherKeyFromEnv(env: NodeJS.ProcessEnv = process.env): string | undefined {
   const key = env[RELAY_SQLCIPHER_ENV]?.trim();
-  if (key !== undefined && key.length > 0) {
-    if (key.length < 16) {
-      throw new SqliteCryptoError(`${RELAY_SQLCIPHER_ENV} must be at least 16 characters`);
-    }
-    return key;
+  if (key === undefined || key.length === 0) return undefined;
+  if (key.length < 16) {
+    throw new SqliteCryptoError(`${RELAY_SQLCIPHER_ENV} must be at least 16 characters`);
   }
-  if (env.NODE_ENV === "production") {
-    throw new SqliteCryptoError(`${RELAY_SQLCIPHER_ENV} is required in production`);
-  }
-  return DEV_SQLCIPHER_KEY;
+  return key;
 }
 
 export function restrictRelayStoreDatabasePermissions(dbPath: string): void {
@@ -55,12 +54,36 @@ export function applyRelayDbPragmas(db: Database): void {
   `);
 }
 
+/** Ignore "SQLite already loaded" when a prior plaintext open raced SQLCipher setCustomSQLite. */
+function softenSetCustomSqlite(): void {
+  const original = Database.setCustomSQLite.bind(Database);
+  Database.setCustomSQLite = ((path: string) => {
+    try {
+      original(path);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (!/SQLite already loaded/i.test(msg)) throw e;
+    }
+  }) as typeof Database.setCustomSQLite;
+}
+
+/**
+ * Open the relay SQLite database. Pass `key` (or set `RELAY_SQLCIPHER_KEY`) for SQLCipher;
+ * omit both for plaintext.
+ */
 export function openRelayDatabase(path?: string, key?: string): Database {
   const dbPath = path ?? relayDatabasePath();
   if (dbPath !== ":memory:") {
     mkdirSync(dirname(dbPath), { recursive: true });
   }
-  const db = openEncryptedDatabaseSync(dbPath, { create: true }, key ?? sqlCipherKeyFromEnv());
+  const sqlCipherKey = key ?? sqlCipherKeyFromEnv();
+  let db: Database;
+  if (typeof sqlCipherKey === "string" && sqlCipherKey.length > 0) {
+    softenSetCustomSqlite();
+    db = openEncryptedDatabaseSync(dbPath, { create: true }, sqlCipherKey);
+  } else {
+    db = new Database(dbPath, { create: true });
+  }
   restrictRelayStoreDatabasePermissions(dbPath);
   applyRelayDbPragmas(db);
   ensureChannelRegistrySchema(db);

@@ -1,11 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { openRelayPersistence, sqliteBackend } from "./persistence";
+import { DEV_SQLCIPHER_KEY } from "./persistence/sqlite/db";
 import { createRelayHub } from "./relay-hub";
 
 describe("createRelayHub opaque relay", () => {
   test("echoes same bytes to sender and peer", async () => {
     const { persistence, cleanup } = openRelayPersistence({
-      durable: sqliteBackend({ path: ":memory:" }),
+      durable: sqliteBackend({ path: ":memory:", key: DEV_SQLCIPHER_KEY }),
     });
     const hub = createRelayHub({ admission: persistence.admission, spool: persistence.spool });
     const receivedA: Uint8Array[] = [];

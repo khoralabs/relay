@@ -24,6 +24,8 @@ purgeChannel(channelId: string): void;
 
 SQLite table: `relay_channels` (`channel_id`, encrypted `pairing_secret_hex`, `created_at_ms`, `expires_at_ms`).
 
+Optional whole-file SQLCipher via `RELAY_SQLCIPHER_KEY` / `sqliteBackend({ key })`; omit for plaintext SQLite.
+
 ### BlobSpool
 
 ```ts

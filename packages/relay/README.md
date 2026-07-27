@@ -14,7 +14,7 @@ DID-authenticated encrypted blob transport — client SDK, Bun HTTP/WebSocket se
 | `@khoralabs/relay/server` | Bun HTTP + WebSocket relay server library |
 | `@khoralabs/relay/testing` | In-process test helpers for the server |
 
-`./server` requires Bun and optional peer `@khoralabs/sqlite-crypto`.
+`./server` requires Bun and optional peer `@khoralabs/sqlite-crypto` (only when `RELAY_SQLCIPHER_KEY` / `sqliteBackend({ key })` is set).
 
 ## Migration from split packages
 
