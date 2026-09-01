@@ -16,6 +16,8 @@ DID-authenticated encrypted blob transport — client SDK, Bun HTTP/WebSocket se
 
 `./server` requires Bun and optional peer `@khoralabs/sqlite-crypto` (only when `RELAY_SQLCIPHER_KEY` / `sqliteBackend({ key })` is set).
 
+For signed chat posts, `@khoralabs/chat/agent` expects a `RelaySigner`-shaped key resolver from `@khoralabs/relay/crypto`.
+
 ## Migration from split packages
 
 ```ts
