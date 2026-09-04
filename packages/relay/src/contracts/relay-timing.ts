@@ -1,4 +1,4 @@
-import { base64UrlToBytes, bytesToBase64Url } from "@khoralabs/relay/crypto";
+import { base64UrlToBytes, bytesToBase64Url } from "@khoralabs/relay/crypto/encoding";
 import type { RelayHlcTimestamp } from "./relay-hlc";
 
 export const RELAY_TIMING_FRAME_VERSION = "rt1" as const;
