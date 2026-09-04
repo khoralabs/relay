@@ -1,4 +1,7 @@
-export { ed25519PublicKeyBytesFromDid } from "./did";
+export {
+  didKeyFromEd25519PublicKey,
+  ed25519PublicKeyBytesFromDid,
+} from "./did";
 export {
   base58Decode,
   base58Encode,
