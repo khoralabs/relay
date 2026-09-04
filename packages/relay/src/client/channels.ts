@@ -7,6 +7,7 @@ import {
   parseRelaySessionAllocateResponse,
   parseRelaySessionStatusResponse,
   parseRosterSnapshot,
+  RELAY_HTTP_PATH,
   type RegisterActorResponse,
   type RelayChannelCreateBody,
   type RelayChannelCreateResponse,
@@ -18,6 +19,13 @@ import {
   type RelaySessionAllocateResponse,
   type RelaySigner,
   type RosterSnapshot,
+  relayChannelActorPath,
+  relayChannelAllocatePath,
+  relayChannelReleasePath,
+  relayChannelRosterPath,
+  relayChannelSessionPath,
+  relayChannelTicketPath,
+  relayChannelWsNoncePath,
 } from "@khoralabs/relay/contracts";
 
 import { signedAgentFetch } from "./agent-sign";
@@ -37,7 +45,7 @@ export async function createChannelHttp(
   const bodyText = JSON.stringify(body);
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "POST",
-    path: "/v1/channels",
+    path: RELAY_HTTP_PATH.channels,
     bodyText,
     signer,
   });
@@ -54,7 +62,7 @@ export async function joinChannelHttp(
   const bodyText = JSON.stringify(body);
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "POST",
-    path: "/v1/channels/join",
+    path: RELAY_HTTP_PATH.channelsJoin,
     bodyText,
     signer,
   });
@@ -68,7 +76,7 @@ export async function mintChannelTicketHttp(
   signer: RelaySigner,
   channelId: string,
 ): Promise<RelayChannelTicketResponse> {
-  const path = `/v1/channels/${encodeURIComponent(channelId)}/ticket`;
+  const path = relayChannelTicketPath(channelId);
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "POST",
     path,
@@ -86,7 +94,7 @@ export async function allocateSessionHttp(
   channelId: string,
   body: RelaySessionAllocateBody,
 ): Promise<RelaySessionAllocateResponse> {
-  const path = `/v1/channels/${encodeURIComponent(channelId)}/sessions/allocate`;
+  const path = relayChannelAllocatePath(channelId);
   const bodyText = JSON.stringify(body);
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "POST",
@@ -104,7 +112,7 @@ export async function mintWsNonceHttp(
   signer: RelaySigner,
   channelId: string,
 ): Promise<RelayChannelWsNonceResponse> {
-  const path = `/v1/channels/${encodeURIComponent(channelId)}/ws-nonce`;
+  const path = relayChannelWsNoncePath(channelId);
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "POST",
     path,
@@ -122,7 +130,7 @@ export async function isSessionAllocatedHttp(
   channelId: string,
   sessionId: string,
 ): Promise<boolean> {
-  const path = `/v1/channels/${encodeURIComponent(channelId)}/sessions/${encodeURIComponent(sessionId)}`;
+  const path = relayChannelSessionPath(channelId, sessionId);
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "GET",
     path,
@@ -140,7 +148,7 @@ export async function releaseSessionHttp(
   channelId: string,
   sessionId: string,
 ): Promise<{ ok: true }> {
-  const path = `/v1/channels/${encodeURIComponent(channelId)}/sessions/${encodeURIComponent(sessionId)}/release`;
+  const path = relayChannelReleasePath(channelId, sessionId);
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "POST",
     path,
@@ -158,7 +166,7 @@ export async function registerActorHttp(
   channelId: string,
   actorPubkey: string,
 ): Promise<RegisterActorResponse> {
-  const path = `/v1/channels/${encodeURIComponent(channelId)}/actor`;
+  const path = relayChannelActorPath(channelId);
   const bodyText = JSON.stringify(parseRegisterActorBody({ actorPubkey }));
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "POST",
@@ -176,7 +184,7 @@ export async function getRosterHttp(
   signer: RelaySigner,
   channelId: string,
 ): Promise<RosterSnapshot> {
-  const path = `/v1/channels/${encodeURIComponent(channelId)}/roster`;
+  const path = relayChannelRosterPath(channelId);
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "GET",
     path,

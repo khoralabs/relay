@@ -6,6 +6,8 @@ import {
   type PublishKeyPackagesBody,
   parseFetchedKeyPackage,
   parseKeyPackagePoolStatus,
+  RELAY_HTTP_PATH,
+  relayKeyPackageDidPath,
 } from "@khoralabs/relay/contracts";
 
 import { signedAgentFetch } from "./signed-http";
@@ -22,7 +24,7 @@ export async function publishKeyPackagesHttp(
   signer: RelaySigner,
   body: PublishKeyPackagesBody,
 ): Promise<{ ok: true }> {
-  const path = "/v1/key-packages";
+  const path = RELAY_HTTP_PATH.keyPackages;
   const bodyText = JSON.stringify(body);
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "POST",
@@ -39,7 +41,7 @@ export async function getKeyPackageStatusHttp(
   relayBaseUrl: string,
   signer: RelaySigner,
 ): Promise<KeyPackagePoolStatus> {
-  const path = "/v1/key-packages/status";
+  const path = RELAY_HTTP_PATH.keyPackagesStatus;
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "GET",
     path,
@@ -56,7 +58,7 @@ export async function appendKeyPackagesHttp(
   signer: RelaySigner,
   body: AppendKeyPackagesBody,
 ): Promise<{ ok: true; remainingKeyPackages: number }> {
-  const path = "/v1/key-packages/batch";
+  const path = RELAY_HTTP_PATH.keyPackagesBatch;
   const bodyText = JSON.stringify(body);
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "POST",
@@ -74,7 +76,7 @@ export async function fetchKeyPackageHttp(
   signer: RelaySigner,
   did: string,
 ): Promise<FetchedKeyPackage> {
-  const path = `/v1/key-packages/${encodeURIComponent(did)}`;
+  const path = relayKeyPackageDidPath(did);
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "GET",
     path,

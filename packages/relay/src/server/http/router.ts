@@ -24,6 +24,7 @@ import {
   channelWsPathRe,
   keyPackageDidPathRe,
   keyPackagesPathRe,
+  RELAY_HTTP_PATH,
 } from "./paths";
 import { handleGetRoster, handleRegisterActor } from "./roster";
 import { handleSessionAllocate, handleSessionRelease, handleSessionStatus } from "./sessions";
@@ -38,15 +39,15 @@ export async function routeRelayHttp(
 ): Promise<Response | undefined> {
   const url = new URL(req.url);
 
-  if (req.method === "GET" && url.pathname === "/health") {
+  if (req.method === "GET" && url.pathname === RELAY_HTTP_PATH.health) {
     return new Response("ok", { status: 200 });
   }
 
-  if (req.method === "POST" && url.pathname === "/v1/channels/join") {
+  if (req.method === "POST" && url.pathname === RELAY_HTTP_PATH.channelsJoin) {
     return handleChannelsInviteJoin(deps, req, url, server);
   }
 
-  if (req.method === "POST" && url.pathname === "/v1/channels") {
+  if (req.method === "POST" && url.pathname === RELAY_HTTP_PATH.channels) {
     if (deps.relayProfile.mode === "single") {
       return jsonError("channel spawn is orchestrator-only; this relay hosts one channel", 501);
     }
@@ -119,11 +120,11 @@ export async function routeRelayHttp(
     return handleGetRoster(deps, req, url, rosterMatch[1] as string, server);
   }
 
-  if (req.method === "GET" && url.pathname === "/v1/key-packages/status") {
+  if (req.method === "GET" && url.pathname === RELAY_HTTP_PATH.keyPackagesStatus) {
     return handleKeyPackageStatus(deps, req, url, server);
   }
 
-  if (req.method === "POST" && url.pathname === "/v1/key-packages/batch") {
+  if (req.method === "POST" && url.pathname === RELAY_HTTP_PATH.keyPackagesBatch) {
     return handleAppendKeyPackages(deps, req, url, server);
   }
 

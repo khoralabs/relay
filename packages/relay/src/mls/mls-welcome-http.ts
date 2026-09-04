@@ -3,6 +3,7 @@ import {
   type FetchedMlsWelcome,
   type PublishMlsWelcomeBody,
   parseFetchedMlsWelcome,
+  relayChannelMlsWelcomePath,
 } from "@khoralabs/relay/contracts";
 import { signedAgentFetch } from "./signed-http";
 
@@ -20,7 +21,7 @@ export async function publishMlsWelcomeHttp(
   sessionId: string,
   body: PublishMlsWelcomeBody,
 ): Promise<{ ok: true }> {
-  const path = `/v1/channels/${encodeURIComponent(channelId)}/sessions/${encodeURIComponent(sessionId)}/mls-welcome`;
+  const path = relayChannelMlsWelcomePath(channelId, sessionId);
   const bodyText = JSON.stringify(body);
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "POST",
@@ -39,7 +40,7 @@ export async function fetchMlsWelcomeHttp(
   channelId: string,
   sessionId: string,
 ): Promise<FetchedMlsWelcome> {
-  const path = `/v1/channels/${encodeURIComponent(channelId)}/sessions/${encodeURIComponent(sessionId)}/mls-welcome`;
+  const path = relayChannelMlsWelcomePath(channelId, sessionId);
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "GET",
     path,

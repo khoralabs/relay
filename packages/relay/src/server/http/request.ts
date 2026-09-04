@@ -1,4 +1,5 @@
 import type { RelayChannelPolicy } from "@khoralabs/relay/contracts";
+import { relayChannelWsPath } from "@khoralabs/relay/contracts";
 
 import { MAX_AGENT_REQUEST_BODY_BYTES, type RelayAuth } from "../auth";
 import { RELAY_HTTP_HEADER } from "../http-headers";
@@ -19,7 +20,7 @@ export function publicWebSocketBase(req: Request): string {
 
 export function channelWebSocketUrl(req: Request, channelId: string): string {
   const base = publicWebSocketBase(req);
-  return `${base}/v1/channels/${encodeURIComponent(channelId)}/ws`;
+  return `${base}${relayChannelWsPath(channelId)}`;
 }
 
 export function applyRateLimit(check: RateLimitCheck): Response | undefined {
