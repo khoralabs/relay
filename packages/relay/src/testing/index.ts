@@ -3,4 +3,9 @@ export {
   createTestRelayApp,
   type TestRelayApp,
 } from "./test-app";
-export { createTestAgent, signedFetch, signedPath } from "./test-sign";
+export {
+  createTestAgent,
+  didKeyFromPublicKey,
+  signedFetch,
+  signedPath,
+} from "./test-sign";

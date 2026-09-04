@@ -1,6 +1,6 @@
 # @khoralabs/relay-crypto
 
-Cryptographic primitives for the relay: DID parsing, ed25519 signing, encoding helpers, and AES-256-GCM field encryption for channel pairing secrets at rest.
+Cryptographic primitives for the relay: DID helpers (via `@khoralabs/did-key-identity`), encoding helpers, and AES-256-GCM field encryption for channel pairing secrets at rest.
 
 ## Install
 
@@ -12,9 +12,9 @@ bun add @khoralabs/relay-crypto
 
 | Export | Description |
 |---|---|
-| `ed25519PublicKeyBytesFromDid` | Extract raw public key bytes from a `did:key` DID |
+| `ed25519PublicKeyBytesFromDid` | Re-export from `@khoralabs/did-key-identity` — extract raw public key bytes from a `did:key` DID |
 | `base58Decode` / `base58Encode` / `bytesToHex` / `hexToBytes` / `bytesToBase64Url` / `base64UrlToBytes` | Encoding helpers (`@scure/base`, `@noble/hashes`) |
-| `RelaySigner` / `PersistableRelaySigner` | Signing interface and persistable variant |
+| `RelaySigner` / `PersistableRelaySigner` | Aliases of `Signer` / `PersistableSigner` from `@khoralabs/did-key-identity` |
 | `encryptPairingSecretHex` / `decryptPairingSecretHex` / `isEncryptedPairingSecret` | AES-256-GCM envelope for pairing secrets stored in SQLite |
 | `pairingSecretKeyFromEnv` / `pairingSecretKeyFromHex` / `pairingSecretKeyFromBase64Url` / `pairingSecretKeyFromPassphrase` | Derive the 32-byte field encryption key from `RELAY_PAIRING_SECRET_ENCRYPTION_KEY` |
 | `PAIRING_SECRET_ENCRYPTION_KEY_ENV` | Env var name (`RELAY_PAIRING_SECRET_ENCRYPTION_KEY`) |

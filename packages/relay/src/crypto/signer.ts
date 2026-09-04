@@ -1,9 +1,7 @@
-/** DID-authenticated relay signer — signs canonical agent-request bytes. */
-export type RelaySigner = {
-  readonly did: string;
-  sign(message: Uint8Array): Promise<Uint8Array>;
-};
+import type { PersistableSigner, Signer } from "@khoralabs/did-key-identity";
 
-export type PersistableRelaySigner = RelaySigner & {
-  export(): string;
-};
+/** @deprecated Prefer `Signer` from `@khoralabs/did-key-identity`; kept as a relay alias. */
+export type RelaySigner = Signer;
+
+/** @deprecated Prefer `PersistableSigner` from `@khoralabs/did-key-identity`; kept as a relay alias. */
+export type PersistableRelaySigner = PersistableSigner;

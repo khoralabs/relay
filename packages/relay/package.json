@@ -1,6 +1,6 @@
 {
   "name": "@khoralabs/relay",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "DID-authenticated encrypted blob transport: client, server, contracts, MLS",
   "license": "MIT",
   "type": "module",
@@ -87,11 +87,11 @@
   },
   "dependencies": {
     "@hpke/core": "^1.9.0",
+    "@khoralabs/did-key-identity": "^0.2.0",
     "@noble/curves": "^2.2.0",
     "@noble/ed25519": "^3.1.0",
     "@noble/hashes": "^2.2.0",
     "@scure/base": "^1.2.6",
-    "lru-cache": "^11.5.1",
     "ts-mls": "^1.6.2"
   },
   "peerDependencies": {

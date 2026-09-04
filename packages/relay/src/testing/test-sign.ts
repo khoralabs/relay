@@ -1,25 +1,21 @@
+import { didKeyFromEd25519PublicKey } from "@khoralabs/did-key-identity";
 import {
   AGENT_REQUEST_HEADER,
   canonicalAgentRequestMessage,
   canonicalAgentRequestPath,
 } from "@khoralabs/relay/contracts";
-import { base58Encode, bytesToBase64Url } from "@khoralabs/relay/crypto";
+import { bytesToBase64Url } from "@khoralabs/relay/crypto";
 import { signAsync } from "@noble/ed25519";
 
-export function didKeyFromPublicKey(pubKey: Uint8Array): string {
-  const prefixed = new Uint8Array(2 + pubKey.length);
-  prefixed[0] = 0xed;
-  prefixed[1] = 0x01;
-  prefixed.set(pubKey, 2);
-  return `did:key:z${base58Encode(prefixed)}`;
-}
+/** @deprecated Prefer `didKeyFromEd25519PublicKey` from `@khoralabs/did-key-identity`. */
+export const didKeyFromPublicKey = didKeyFromEd25519PublicKey;
 
 export async function createTestAgent() {
   const privateKey = new Uint8Array(32);
   crypto.getRandomValues(privateKey);
   const { getPublicKeyAsync } = await import("@noble/ed25519");
   const publicKey = await getPublicKeyAsync(privateKey);
-  const did = didKeyFromPublicKey(publicKey);
+  const did = didKeyFromEd25519PublicKey(publicKey);
   return { did, privateKey, publicKey };
 }
 

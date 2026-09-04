@@ -1,24 +1,16 @@
 import { describe, expect, test } from "bun:test";
-import { base58Encode } from "@khoralabs/relay/crypto";
+import { didKeyFromEd25519PublicKey } from "@khoralabs/did-key-identity";
 import { encodeKeyPackageWire } from "./key-package-wire";
 import { MlsGroupSession } from "./mls-group-session";
 import { getRelayMlsCiphersuite } from "./relay-mls-ciphersuite";
 import { generateDidBoundKeyPackage } from "./relay-mls-key-package";
-
-function didKeyFromPublicKey(pubKey: Uint8Array): string {
-  const prefixed = new Uint8Array(2 + pubKey.length);
-  prefixed[0] = 0xed;
-  prefixed[1] = 0x01;
-  prefixed.set(pubKey, 2);
-  return `did:key:z${base58Encode(prefixed)}`;
-}
 
 async function testAgent() {
   const privateKey = new Uint8Array(32);
   crypto.getRandomValues(privateKey);
   const { getPublicKeyAsync } = await import("@noble/ed25519");
   const publicKey = await getPublicKeyAsync(privateKey);
-  const did = didKeyFromPublicKey(publicKey);
+  const did = didKeyFromEd25519PublicKey(publicKey);
   return { did, privateKey, publicKey };
 }
 
