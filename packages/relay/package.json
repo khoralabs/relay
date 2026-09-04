@@ -34,6 +34,11 @@
       "import": "./src/client/index.ts",
       "default": "./src/client/index.ts"
     },
+    "./client/errors": {
+      "types": "./src/client/errors.ts",
+      "import": "./src/client/errors.ts",
+      "default": "./src/client/errors.ts"
+    },
     "./crypto": {
       "types": "./src/crypto/index.ts",
       "import": "./src/crypto/index.ts",

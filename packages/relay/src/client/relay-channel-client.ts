@@ -10,7 +10,6 @@ import type {
   RelaySigner,
   RosterSnapshot,
 } from "@khoralabs/relay/contracts";
-import { KeyPackageManager, type KeyPackageManagerOptions } from "@khoralabs/relay/mls";
 
 import {
   allocateSessionHttp,
@@ -30,6 +29,7 @@ export type RelayClientOptions = {
   signer: RelaySigner;
 };
 
+/** HTTP/WS channel client. MLS KeyPackage helpers live in `@khoralabs/relay/mls`. */
 export class RelayClient {
   constructor(public readonly opts: RelayClientOptions) {}
 
@@ -70,23 +70,6 @@ export class RelayClient {
 
   getRoster(channelId: string): Promise<RosterSnapshot> {
     return getRosterHttp(this.opts.relayBaseUrl, this.opts.signer, channelId);
-  }
-
-  createKeyPackageManager(
-    myDid: string,
-    ed25519PrivateKey: Uint8Array,
-    opts?: Omit<
-      KeyPackageManagerOptions,
-      "relayBaseUrl" | "signer" | "myDid" | "ed25519PrivateKey"
-    >,
-  ): KeyPackageManager {
-    return new KeyPackageManager({
-      relayBaseUrl: this.opts.relayBaseUrl,
-      signer: this.opts.signer,
-      myDid,
-      ed25519PrivateKey,
-      ...opts,
-    });
   }
 
   connect(opts: RelayConnectOptions): RelayPeerConnection {

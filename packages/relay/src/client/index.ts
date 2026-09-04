@@ -1,11 +1,4 @@
 export {
-  KeyPackageManager,
-  type KeyPackageManagerOptions,
-  MlsChannelConnection,
-  type MlsChannelConnectionOptions,
-  type MlsChannelConnectOptions,
-} from "@khoralabs/relay/mls";
-export {
   type SignAgentRequestInput,
   type SignedAgentRequest,
   signAgentRequest,

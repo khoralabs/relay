@@ -61,7 +61,7 @@ All HTTP endpoints except `/health` require a DID-signed request envelope. Hosts
 
 **Multiple instances behind a load balancer** must set `RELAY_REDIS_URL` so nonce replay protection and HTTP rate limits share state across pods. Without Redis, a captured signed request can be replayed against a different instance, and per-DID/IP limits reset per process. SQLite on separate DB files per pod does **not** coordinate across instances.
 
-**MLS KeyPackage fetch** (`GET /v1/key-packages/:did`) requires DID-signed auth and per-requester rate limits. Each successful fetch claims one KeyPackage from the peer's pool. The relay cannot mint keys — hosts should run `@khoralabs/relay-mls` `KeyPackageManager` (via `RelayClient.createKeyPackageManager`) to poll `GET /v1/key-packages/status` and append packages via `POST /v1/key-packages/batch` before the pool is depleted.
+**MLS KeyPackage fetch** (`GET /v1/key-packages/:did`) requires DID-signed auth and per-requester rate limits. Each successful fetch claims one KeyPackage from the peer's pool. The relay cannot mint keys — hosts should run `@khoralabs/relay/mls` `KeyPackageManager` to poll `GET /v1/key-packages/status` and append packages via `POST /v1/key-packages/batch` before the pool is depleted.
 
 **MLS Welcome store** (`POST/GET .../sessions/:id/mls-welcome`) holds opaque Welcome blobs and the per-session bus `route` handle (`mls2`). Only the session initiator may publish; session parties may fetch once (delete-on-read). Rows are also removed on session release and when channels expire.
 
