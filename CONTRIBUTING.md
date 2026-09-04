@@ -12,17 +12,26 @@ Thanks for helping improve `@khoralabs/relay`. This repo is a Bun workspace with
 bun install
 ```
 
-Husky installs via `prepare`. **pre-commit** runs `check`; **pre-push** runs `check`, `typecheck`, and `test`.
+Husky installs via `prepare`. **pre-commit** runs Biome (`format:check`); **pre-push** runs `verify` (format, typecheck, test, build); **commit-msg** runs agent-review on the staged diff.
 
 ## Before you open a PR
 
 From the repo root:
 
 ```bash
-bun run check
+bun run verify
+```
+
+Or individually:
+
+```bash
+bun run format:check
 bun run typecheck
 bun run test
+bun run build
 ```
+
+Manual review of staged changes: `bun run review`.
 
 If you changed public TypeScript APIs, update `CHANGELOG.md` under **Unreleased** (see existing entries for breaking vs additive changes).
 

@@ -37,10 +37,10 @@ bun install
 Run all checks before committing:
 
 ```bash
-bun run check
-bun run typecheck
-bun run test
+bun run verify
 ```
+
+Hooks (via husky): `pre-commit` runs Biome; `pre-push` runs format check, typecheck, tests, and build; `commit-msg` runs agent-review.
 
 ### Migration from split packages
 

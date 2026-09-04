@@ -10,7 +10,7 @@
       "**",
       "!**/node_modules",
       "!**/dist",
-      "!**/packages/**/*/dist",
+      "!**/out",
       "!**/bun.lock",
       "!**/.idea",
       "!**/.vscode",
@@ -24,6 +24,7 @@
     "lineWidth": 100
   },
   "assist": {
+    "enabled": true,
     "actions": {
       "source": {
         "organizeImports": "on"
@@ -39,7 +40,8 @@
   "javascript": {
     "formatter": {
       "quoteStyle": "double",
-      "semicolons": "always"
+      "semicolons": "always",
+      "trailingCommas": "all"
     }
   }
 }
