@@ -6,10 +6,12 @@ import {
   RELAY_HTTP_PATH,
   RELAY_PROTOCOL_VERSION,
   type RelayHealthResponse,
+  relayChannelActorPath,
   relayChannelAllocatePath,
   relayChannelJoinTokensPath,
   relayChannelMlsWelcomePath,
   relayChannelReleasePath,
+  relayChannelRosterPath,
   relayChannelSessionPath,
   relayChannelTicketPath,
   relayChannelWsNoncePath,
@@ -20,10 +22,12 @@ import { signAsync } from "@noble/ed25519";
 import { createChannelHttp } from "../client/channels";
 import { createTestAgent, createTestRelayApp } from "../testing";
 import {
+  channelActorPathRe,
   channelAllocatePathRe,
   channelJoinTokensPathRe,
   channelMlsWelcomePathRe,
   channelReleasePathRe,
+  channelRosterPathRe,
   channelSessionStatusPathRe,
   channelTicketPathRe,
   channelWsNoncePathRe,
@@ -47,6 +51,8 @@ describe("client↔router boundary contracts", () => {
       true,
     );
     expect(channelReleasePathRe.test(relayChannelReleasePath(channelId, sessionId))).toBe(true);
+    expect(channelActorPathRe.test(relayChannelActorPath(channelId))).toBe(true);
+    expect(channelRosterPathRe.test(relayChannelRosterPath(channelId))).toBe(true);
     expect(channelMlsWelcomePathRe.test(relayChannelMlsWelcomePath(channelId, sessionId))).toBe(
       true,
     );
