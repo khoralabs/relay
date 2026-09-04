@@ -1,3 +1,4 @@
+import { RELAY_PROTOCOL_VERSION, type RelayHealthResponse } from "../../contracts/http";
 import type { RelayHubWsData } from "../relay-hub";
 import { jsonError } from "../responses";
 import { handleChannelsCreate } from "./channels-create";
@@ -40,7 +41,8 @@ export async function routeRelayHttp(
   const url = new URL(req.url);
 
   if (req.method === "GET" && url.pathname === RELAY_HTTP_PATH.health) {
-    return new Response("ok", { status: 200 });
+    const body: RelayHealthResponse = { ok: true, version: RELAY_PROTOCOL_VERSION };
+    return Response.json(body);
   }
 
   if (req.method === "POST" && url.pathname === RELAY_HTTP_PATH.channelsJoin) {

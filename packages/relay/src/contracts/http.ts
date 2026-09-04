@@ -1,5 +1,13 @@
 /** HTTP path constants shared by relay client, MLS HTTP helpers, and server router. */
 
+/** Protocol version returned by `GET /health`. */
+export const RELAY_PROTOCOL_VERSION = 1 as const;
+
+export type RelayHealthResponse = {
+  ok: true;
+  version: typeof RELAY_PROTOCOL_VERSION;
+};
+
 export const RELAY_HTTP_PATH = {
   health: "/health",
   channels: "/v1/channels",
