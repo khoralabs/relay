@@ -6,23 +6,19 @@ import {
   type PublishKeyPackagesBody,
   parseFetchedKeyPackage,
   parseKeyPackagePoolStatus,
+  RELAY_HTTP_PATH,
+  relayKeyPackageDidPath,
 } from "@khoralabs/relay/contracts";
 
+import { throwRelayHttpError } from "../client/errors";
 import { signedAgentFetch } from "./signed-http";
-
-function httpError(statusText: string, j: unknown): string {
-  if (typeof j === "object" && j !== null && "error" in j) {
-    return String((j as { error: unknown }).error);
-  }
-  return statusText;
-}
 
 export async function publishKeyPackagesHttp(
   relayBaseUrl: string,
   signer: RelaySigner,
   body: PublishKeyPackagesBody,
 ): Promise<{ ok: true }> {
-  const path = "/v1/key-packages";
+  const path = RELAY_HTTP_PATH.keyPackages;
   const bodyText = JSON.stringify(body);
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "POST",
@@ -31,7 +27,7 @@ export async function publishKeyPackagesHttp(
     signer,
   });
   const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  if (!res.ok) throwRelayHttpError(res.status, res.statusText, j);
   return j as { ok: true };
 }
 
@@ -39,7 +35,7 @@ export async function getKeyPackageStatusHttp(
   relayBaseUrl: string,
   signer: RelaySigner,
 ): Promise<KeyPackagePoolStatus> {
-  const path = "/v1/key-packages/status";
+  const path = RELAY_HTTP_PATH.keyPackagesStatus;
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "GET",
     path,
@@ -47,7 +43,7 @@ export async function getKeyPackageStatusHttp(
     signer,
   });
   const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  if (!res.ok) throwRelayHttpError(res.status, res.statusText, j);
   return parseKeyPackagePoolStatus(j);
 }
 
@@ -56,7 +52,7 @@ export async function appendKeyPackagesHttp(
   signer: RelaySigner,
   body: AppendKeyPackagesBody,
 ): Promise<{ ok: true; remainingKeyPackages: number }> {
-  const path = "/v1/key-packages/batch";
+  const path = RELAY_HTTP_PATH.keyPackagesBatch;
   const bodyText = JSON.stringify(body);
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "POST",
@@ -65,7 +61,7 @@ export async function appendKeyPackagesHttp(
     signer,
   });
   const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  if (!res.ok) throwRelayHttpError(res.status, res.statusText, j);
   return j as { ok: true; remainingKeyPackages: number };
 }
 
@@ -74,7 +70,7 @@ export async function fetchKeyPackageHttp(
   signer: RelaySigner,
   did: string,
 ): Promise<FetchedKeyPackage> {
-  const path = `/v1/key-packages/${encodeURIComponent(did)}`;
+  const path = relayKeyPackageDidPath(did);
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "GET",
     path,
@@ -82,6 +78,6 @@ export async function fetchKeyPackageHttp(
     signer,
   });
   const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  if (!res.ok) throwRelayHttpError(res.status, res.statusText, j);
   return parseFetchedKeyPackage(j);
 }

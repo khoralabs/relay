@@ -3,15 +3,11 @@ import {
   type FetchedMlsWelcome,
   type PublishMlsWelcomeBody,
   parseFetchedMlsWelcome,
+  relayChannelMlsWelcomePath,
 } from "@khoralabs/relay/contracts";
-import { signedAgentFetch } from "./signed-http";
 
-function httpError(statusText: string, j: unknown): string {
-  if (typeof j === "object" && j !== null && "error" in j) {
-    return String((j as { error: unknown }).error);
-  }
-  return statusText;
-}
+import { throwRelayHttpError } from "../client/errors";
+import { signedAgentFetch } from "./signed-http";
 
 export async function publishMlsWelcomeHttp(
   relayBaseUrl: string,
@@ -20,7 +16,7 @@ export async function publishMlsWelcomeHttp(
   sessionId: string,
   body: PublishMlsWelcomeBody,
 ): Promise<{ ok: true }> {
-  const path = `/v1/channels/${encodeURIComponent(channelId)}/sessions/${encodeURIComponent(sessionId)}/mls-welcome`;
+  const path = relayChannelMlsWelcomePath(channelId, sessionId);
   const bodyText = JSON.stringify(body);
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "POST",
@@ -29,7 +25,7 @@ export async function publishMlsWelcomeHttp(
     signer,
   });
   const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  if (!res.ok) throwRelayHttpError(res.status, res.statusText, j);
   return j as { ok: true };
 }
 
@@ -39,7 +35,7 @@ export async function fetchMlsWelcomeHttp(
   channelId: string,
   sessionId: string,
 ): Promise<FetchedMlsWelcome> {
-  const path = `/v1/channels/${encodeURIComponent(channelId)}/sessions/${encodeURIComponent(sessionId)}/mls-welcome`;
+  const path = relayChannelMlsWelcomePath(channelId, sessionId);
   const res = await signedAgentFetch(relayBaseUrl, {
     method: "GET",
     path,
@@ -47,6 +43,6 @@ export async function fetchMlsWelcomeHttp(
     signer,
   });
   const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  if (!res.ok) throwRelayHttpError(res.status, res.statusText, j);
   return parseFetchedMlsWelcome(j);
 }

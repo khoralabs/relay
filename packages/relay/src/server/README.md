@@ -33,7 +33,7 @@ All endpoints except `/health` require a DID-signed `Agent-Request` header.
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/health` | Health check (no auth) |
+| GET | `/health` | Health check (no auth); JSON `{ ok: true, version: 1 }` |
 | POST | `/v1/channels` | Create channel (pool mode only; `501` in single mode) |
 | POST | `/v1/channels/join` | Join via invite token |
 | POST | `/v1/channels/:id/ticket` | Mint HMAC ticket + fresh WS upgrade nonce for a member |
