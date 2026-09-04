@@ -5,14 +5,9 @@ import {
   parseFetchedMlsWelcome,
   relayChannelMlsWelcomePath,
 } from "@khoralabs/relay/contracts";
-import { signedAgentFetch } from "./signed-http";
 
-function httpError(statusText: string, j: unknown): string {
-  if (typeof j === "object" && j !== null && "error" in j) {
-    return String((j as { error: unknown }).error);
-  }
-  return statusText;
-}
+import { throwRelayHttpError } from "../client/errors";
+import { signedAgentFetch } from "./signed-http";
 
 export async function publishMlsWelcomeHttp(
   relayBaseUrl: string,
@@ -30,7 +25,7 @@ export async function publishMlsWelcomeHttp(
     signer,
   });
   const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  if (!res.ok) throwRelayHttpError(res.status, res.statusText, j);
   return j as { ok: true };
 }
 
@@ -48,6 +43,6 @@ export async function fetchMlsWelcomeHttp(
     signer,
   });
   const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  if (!res.ok) throwRelayHttpError(res.status, res.statusText, j);
   return parseFetchedMlsWelcome(j);
 }

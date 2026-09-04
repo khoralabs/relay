@@ -29,13 +29,7 @@ import {
 } from "@khoralabs/relay/contracts";
 
 import { signedAgentFetch } from "./agent-sign";
-
-function httpError(statusText: string, j: unknown): string {
-  if (typeof j === "object" && j !== null && "error" in j) {
-    return String((j as { error: unknown }).error);
-  }
-  return statusText;
-}
+import { throwRelayHttpError } from "./errors";
 
 export async function createChannelHttp(
   relayBaseUrl: string,
@@ -50,7 +44,7 @@ export async function createChannelHttp(
     signer,
   });
   const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  if (!res.ok) throwRelayHttpError(res.status, res.statusText, j);
   return parseRelayChannelCreateResponse(j);
 }
 
@@ -67,7 +61,7 @@ export async function joinChannelHttp(
     signer,
   });
   const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  if (!res.ok) throwRelayHttpError(res.status, res.statusText, j);
   return parseRelayChannelJoinResponse(j);
 }
 
@@ -84,7 +78,7 @@ export async function mintChannelTicketHttp(
     signer,
   });
   const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  if (!res.ok) throwRelayHttpError(res.status, res.statusText, j);
   return parseRelayChannelTicketResponse(j);
 }
 
@@ -103,7 +97,7 @@ export async function allocateSessionHttp(
     signer,
   });
   const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  if (!res.ok) throwRelayHttpError(res.status, res.statusText, j);
   return parseRelaySessionAllocateResponse(j);
 }
 
@@ -120,7 +114,7 @@ export async function mintWsNonceHttp(
     signer,
   });
   const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  if (!res.ok) throwRelayHttpError(res.status, res.statusText, j);
   return parseRelayChannelWsNonceResponse(j);
 }
 
@@ -156,7 +150,7 @@ export async function releaseSessionHttp(
     signer,
   });
   const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  if (!res.ok) throwRelayHttpError(res.status, res.statusText, j);
   return j as { ok: true };
 }
 
@@ -175,7 +169,7 @@ export async function registerActorHttp(
     signer,
   });
   const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  if (!res.ok) throwRelayHttpError(res.status, res.statusText, j);
   return j as RegisterActorResponse;
 }
 
@@ -192,6 +186,6 @@ export async function getRosterHttp(
     signer,
   });
   const j: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(httpError(res.statusText, j));
+  if (!res.ok) throwRelayHttpError(res.status, res.statusText, j);
   return parseRosterSnapshot(j);
 }
