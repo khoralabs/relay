@@ -1,4 +1,4 @@
-export type { RelaySigner } from "@khoralabs/relay/crypto";
+export type { RelaySigner } from "../crypto/signer.ts";
 export * from "./auth-wire";
 export * from "./channels";
 export * from "./errors";

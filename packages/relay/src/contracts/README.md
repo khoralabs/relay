@@ -1,6 +1,8 @@
-# @khoralabs/relay-contracts
+# @khoralabs/relay/contracts
 
-Shared TypeScript types used by both the relay server and client. Runtime dependencies are limited to `@khoralabs/relay-crypto` (signer type only).
+Shared TypeScript types and HTTP path constants used by the relay server and client.
+
+Browser-safe: importing `@khoralabs/relay/contracts` (or `./contracts/http`, `./contracts/errors`) does **not** load Node pairing-secret crypto. Encoding helpers come from `@khoralabs/relay/crypto/encoding`.
 
 ## Contents
 
@@ -14,6 +16,7 @@ Shared TypeScript types used by both the relay server and client. Runtime depend
 | `relay-crypto-profile` | MLS envelope version (`mls2`), ciphersuite name/id |
 | `relay-timing` / `relay-timing-layer` | `RelayTimingFrame` (`rt1`) encode/decode and `withTiming` helper |
 | `relay-hlc` | Hybrid logical clock types for peer timing |
+| `http` / `errors` | Also published as `@khoralabs/relay/contracts/http` and `./contracts/errors` |
 
 ## Persistence ports (relay infrastructure)
 
@@ -36,5 +39,5 @@ Negotiation `Frame`, MLS hub envelopes (`mls2`), and NBC timing are defined in O
 ## Install
 
 ```bash
-bun add @khoralabs/relay-contracts
+bun add @khoralabs/relay
 ```

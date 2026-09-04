@@ -1,4 +1,4 @@
-import { base64UrlToBytes, bytesToBase64Url } from "@khoralabs/relay/crypto";
+import { base64UrlToBytes, bytesToBase64Url } from "@khoralabs/relay/crypto/encoding";
 
 /** Header names for per-request agent signatures (used on every authenticated route). */
 export const AGENT_REQUEST_HEADER = {

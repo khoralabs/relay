@@ -34,15 +34,35 @@
       "import": "./src/client/index.ts",
       "default": "./src/client/index.ts"
     },
+    "./client/errors": {
+      "types": "./src/client/errors.ts",
+      "import": "./src/client/errors.ts",
+      "default": "./src/client/errors.ts"
+    },
     "./crypto": {
       "types": "./src/crypto/index.ts",
       "import": "./src/crypto/index.ts",
       "default": "./src/crypto/index.ts"
     },
+    "./crypto/encoding": {
+      "types": "./src/crypto/encoding.ts",
+      "import": "./src/crypto/encoding.ts",
+      "default": "./src/crypto/encoding.ts"
+    },
     "./contracts": {
       "types": "./src/contracts/index.ts",
       "import": "./src/contracts/index.ts",
       "default": "./src/contracts/index.ts"
+    },
+    "./contracts/http": {
+      "types": "./src/contracts/http.ts",
+      "import": "./src/contracts/http.ts",
+      "default": "./src/contracts/http.ts"
+    },
+    "./contracts/errors": {
+      "types": "./src/contracts/errors.ts",
+      "import": "./src/contracts/errors.ts",
+      "default": "./src/contracts/errors.ts"
     },
     "./admission": {
       "types": "./src/admission/index.ts",

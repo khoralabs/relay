@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { bytesToBase64Url } from "@khoralabs/relay/crypto";
+import { bytesToBase64Url } from "@khoralabs/relay/crypto/encoding";
 import { decodeRelayTimingFrame, encodeRelayTimingFrame } from "./relay-timing";
 import { withTiming } from "./relay-timing-layer";
 
